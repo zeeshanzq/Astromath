@@ -1,0 +1,2197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroMath Quest - Space Math Explorer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka for playful headings & Nunito for crisp numbers and body copy -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 60%, #090d16 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+            user-select: none;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+        /* Subtle animated starfield background */
+        .stars-bg {
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 40px 70px, #fde047, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 90px 40px, #38bdf8, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 160px 120px, #ffffff, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 230px 80px, #c084fc, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 260px 260px;
+        }
+        /* Tactile 3D-style game buttons */
+        .btn-game {
+            transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
+        }
+        .btn-game:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+        }
+        .btn-numpad {
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 0 #cbd5e1;
+        }
+        .btn-numpad:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #cbd5e1;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.88); opacity: 0; }
+            70% { transform: scale(1.03); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes floatRocket {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(2deg); }
+        }
+        .rocket-float {
+            animation: floatRocket 3s ease-in-out infinite;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="stars-bg flex flex-col">
+
+    <!-- Top Header: Student Profile Switcher, XP, Streak, Stars, Badges & Music Toggle -->
+    <header class="w-full bg-slate-900/90 backdrop-blur-md border-b border-indigo-500/30 sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2.5">
+            <!-- Brand & Active Student Profile Selector -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl shadow-lg rocket-float shrink-0">
+                    🚀
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="text-lg sm:text-xl font-bold text-white leading-tight tracking-wide">AstroMath Quest</h1>
+                        <button onclick="openProfileModal()" class="bg-indigo-800/80 hover:bg-indigo-700 border border-indigo-400/40 text-amber-300 text-xs font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1 transition" title="Switch or Add Student Profile">
+                            <span>👤</span>
+                            <span id="active-student-name">Explorer</span>
+                            <span>▾</span>
+                        </button>
+                    </div>
+                    <p class="text-xs text-indigo-300 font-semibold" id="planet-title">Rank: Space Cadet 🌑</p>
+                </div>
+            </div>
+
+            <!-- XP Bar, Streak, Star Coins, Badges & Music Button -->
+            <div class="flex items-center gap-2 sm:gap-2.5">
+                <!-- Level & XP Progress -->
+                <div class="bg-slate-800/90 border border-slate-700 rounded-2xl px-3 py-1.5 flex items-center gap-2">
+                    <span class="bg-indigo-600 text-white text-xs font-extrabold px-2 py-0.5 rounded-lg" id="level-badge">LVL 1</span>
+                    <div class="w-14 sm:w-24 h-3 bg-slate-700 rounded-full overflow-hidden">
+                        <div id="xp-bar" class="h-full bg-gradient-to-r from-emerald-400 to-teal-300 transition-all duration-500 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <span class="text-xs font-bold text-slate-300 hidden md:inline" id="xp-text">0/100 XP</span>
+                </div>
+
+                <!-- Streak Counter -->
+                <div class="bg-slate-800/90 border border-amber-500/40 rounded-2xl px-2.5 py-1.5 flex items-center gap-1" title="Correct Answer Streak">
+                    <span class="text-base">🔥</span>
+                    <span class="font-extrabold text-amber-400 text-sm" id="streak-count">0</span>
+                </div>
+
+                <!-- Star Coins -->
+                <div class="bg-slate-800/90 border border-yellow-400/40 rounded-2xl px-2.5 py-1.5 flex items-center gap-1" title="Star Coins Earned">
+                    <span class="text-base">🪙</span>
+                    <span class="font-extrabold text-yellow-300 text-sm" id="stars-count">0</span>
+                </div>
+
+                <!-- Badges Modal Button -->
+                <button onclick="toggleBadgesModal()" class="btn-game bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-1">
+                    <span>🏆</span>
+                    <span class="hidden md:inline">Badges</span>
+                </button>
+
+                <!-- Music / Sound Toggle -->
+                <button onclick="toggleSound()" id="sound-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-2.5 h-9 rounded-2xl flex items-center justify-center gap-1 text-xs font-extrabold transition" title="Toggle Musical Cues">
+                    <span id="sound-icon">🎵</span>
+                    <span id="sound-label" class="hidden sm:inline">Music On</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mode Navigation Tabs -->
+        <nav class="max-w-6xl mx-auto px-3 sm:px-6 pb-2.5 pt-1 flex gap-1.5 sm:gap-2 overflow-x-auto">
+            <button onclick="setMode('quest')" id="tab-quest" class="mode-tab whitespace-nowrap px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-extrabold transition flex items-center gap-1.5 bg-amber-400 text-slate-950 shadow">
+                <span>🛸</span> Adventure Quest
+            </button>
+            <button onclick="setMode('tables')" id="tab-tables" class="mode-tab whitespace-nowrap px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-extrabold transition flex items-center gap-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700">
+                <span>⚡</span> Times Tables Dojo
+            </button>
+            <button onclick="setMode('assessment')" id="tab-assessment" class="mode-tab whitespace-nowrap px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-extrabold transition flex items-center gap-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700">
+                <span>📋</span> Mission Checkup
+            </button>
+            <button onclick="setMode('missing')" id="tab-missing" class="mode-tab whitespace-nowrap px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-extrabold transition flex items-center gap-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700">
+                <span>🔍</span> Missing Numbers (? + x)
+            </button>
+            <button onclick="setMode('matcher')" id="tab-matcher" class="mode-tab whitespace-nowrap px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-extrabold transition flex items-center gap-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700">
+                <span>🧠</span> Pick the Best Method
+            </button>
+            <button onclick="setMode('stories')" id="tab-stories" class="mode-tab whitespace-nowrap px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-extrabold transition flex items-center gap-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700">
+                <span>📖</span> Space Stories
+            </button>
+            <button onclick="setMode('lab')" id="tab-lab" class="mode-tab whitespace-nowrap px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-extrabold transition flex items-center gap-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700">
+                <span>🔬</span> Method Lab
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 flex flex-col gap-4">
+
+        <!-- 1. QUESTION & STRATEGY WORKSPACE (Quest, Missing, Matcher, Stories) -->
+        <div id="question-workspace" class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            <!-- Left / Main Equation & Input Card -->
+            <div class="lg:col-span-7 bg-white text-slate-900 rounded-3xl p-5 sm:p-7 shadow-2xl border-4 border-indigo-200 flex flex-col justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <span id="mission-badge" class="bg-indigo-100 text-indigo-800 text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full">
+                        🚀 Space Fuel Mission
+                    </span>
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                        <button onclick="setDifficulty('easy')" id="diff-easy" class="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-emerald-500 text-white transition">Cadet (1–20)</button>
+                        <button onclick="setDifficulty('medium')" id="diff-medium" class="px-2.5 py-1 rounded-lg text-xs font-extrabold text-slate-600 hover:bg-slate-200 transition">Explorer (1–100)</button>
+                        <button onclick="setDifficulty('hard')" id="diff-hard" class="px-2.5 py-1 rounded-lg text-xs font-extrabold text-slate-600 hover:bg-slate-200 transition">Commander (1–1000)</button>
+                    </div>
+                </div>
+
+                <!-- Word Problem Story Box -->
+                <div id="story-box" class="hidden mb-4 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-slate-800 text-base sm:text-lg font-bold leading-relaxed"></div>
+
+                <!-- Equation Display -->
+                <div class="my-3 py-6 px-4 bg-slate-50 rounded-3xl border-2 border-slate-200 flex flex-col items-center justify-center text-center">
+                    <div id="equation-display" class="text-4xl sm:text-6xl font-black text-slate-900 tracking-wide flex flex-wrap items-center justify-center gap-2 sm:gap-3"></div>
+                    <p id="question-subhint" class="text-sm font-bold text-slate-500 mt-2">Find the missing number to power up!</p>
+                </div>
+
+                <!-- Pick the Best Method Multiple Choice -->
+                <div id="matcher-options" class="hidden grid-cols-1 sm:grid-cols-2 gap-2.5 my-2"></div>
+
+                <!-- Numeric Answer Input & Tactile Numpad -->
+                <div id="numeric-input-area" class="mt-2 flex flex-col gap-3">
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <input type="text" id="answer-input" inputmode="numeric" readonly placeholder="?"
+                            class="w-full text-center text-3xl sm:text-4xl font-black bg-indigo-50 border-4 border-indigo-300 focus:border-indigo-500 rounded-2xl py-3 text-indigo-950 outline-none" />
+                        <button onclick="checkAnswer()" id="submit-btn"
+                            class="btn-game bg-emerald-500 hover:bg-emerald-400 text-white font-display text-xl sm:text-2xl font-bold px-6 sm:px-8 py-4 rounded-2xl shrink-0">
+                            Check! ✓
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-6 gap-1.5 sm:gap-2 pt-1">
+                        <button onclick="pressNum('1')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">1</button>
+                        <button onclick="pressNum('2')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">2</button>
+                        <button onclick="pressNum('3')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">3</button>
+                        <button onclick="pressNum('4')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">4</button>
+                        <button onclick="pressNum('5')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">5</button>
+                        <button onclick="backspaceNum()" class="btn-numpad bg-rose-100 hover:bg-rose-200 text-rose-700 font-black text-lg py-2.5 rounded-xl">⌫</button>
+                        <button onclick="pressNum('6')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">6</button>
+                        <button onclick="pressNum('7')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">7</button>
+                        <button onclick="pressNum('8')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">8</button>
+                        <button onclick="pressNum('9')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">9</button>
+                        <button onclick="pressNum('0')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">0</button>
+                        <button onclick="clearNum()" class="btn-numpad bg-amber-100 hover:bg-amber-200 text-amber-800 font-extrabold text-sm py-2.5 rounded-xl">Clear</button>
+                    </div>
+                </div>
+
+                <!-- Feedback Banner -->
+                <div id="feedback-banner" class="hidden mt-4 p-4 rounded-2xl font-bold text-base sm:text-lg flex items-center justify-between gap-3 animate-pop">
+                    <div class="flex items-center gap-2.5">
+                        <span id="feedback-icon" class="text-2xl">🎉</span>
+                        <span id="feedback-text">Awesome job!</span>
+                    </div>
+                    <button onclick="nextQuestion()" id="next-btn" class="btn-game bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-extrabold shrink-0">
+                        Next Mission →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Astro-Bot Visual Strategy Helper ("Show Me How!") -->
+            <div class="lg:col-span-5 bg-slate-900/90 border-2 border-indigo-400/40 rounded-3xl p-5 shadow-xl flex flex-col gap-3">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">🤖</span>
+                        <div>
+                            <h2 class="text-base sm:text-lg font-bold text-white leading-none">Astro-Bot Strategy Helper</h2>
+                            <p class="text-xs text-indigo-300 font-semibold mt-0.5">Swedish & UK Math Tricks</p>
+                        </div>
+                    </div>
+                    <button onclick="revealStrategy()" id="show-strategy-btn" class="btn-game bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs sm:text-sm px-3.5 py-2 rounded-xl shrink-0">
+                        💡 Show Me How!
+                    </button>
+                </div>
+
+                <div id="strategy-panel" class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 min-h-[270px] flex flex-col justify-between">
+                    <div id="strategy-locked" class="my-auto text-center py-6 px-2">
+                        <div class="text-4xl mb-2">🧭</div>
+                        <p class="text-sm sm:text-base font-bold text-slate-200 mb-1">Not sure which trick to use?</p>
+                        <p class="text-xs text-slate-400 mb-4">Tap <span class="text-amber-300 font-bold">"Show Me How!"</span> to see a visual drawing of the smartest strategy for this problem!</p>
+                        <div class="inline-flex flex-wrap justify-center gap-1.5 text-[11px] font-bold">
+                            <span class="bg-slate-700 text-sky-300 px-2.5 py-1 rounded-lg">Tiokompisar (Make 10)</span>
+                            <span class="bg-slate-700 text-emerald-300 px-2.5 py-1 rounded-lg">Tallinje (Number Line)</span>
+                            <span class="bg-slate-700 text-purple-300 px-2.5 py-1 rounded-lg">Uppställning (Columns)</span>
+                        </div>
+                    </div>
+
+                    <div id="strategy-revealed" class="hidden flex flex-col gap-3 animate-pop">
+                        <div class="flex items-center justify-between gap-2 border-b border-slate-700 pb-2">
+                            <span id="strat-name" class="text-sm sm:text-base font-extrabold text-amber-300">Make-10 / Tiokompisar</span>
+                            <span class="text-[11px] font-bold bg-indigo-500/30 text-indigo-200 px-2 py-0.5 rounded-md">Best Trick</span>
+                        </div>
+                        <p id="strat-why" class="text-xs sm:text-sm text-slate-200 font-semibold leading-relaxed"></p>
+                        <div id="strat-visual" class="bg-white rounded-2xl p-3 text-slate-900 overflow-x-auto flex items-center justify-center min-h-[150px]"></div>
+                        <div id="strat-steps" class="text-xs font-bold text-emerald-300 bg-emerald-950/50 border border-emerald-700/40 rounded-xl p-2.5 leading-relaxed"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. TIMES TABLES DOJO (2x to 10x + Mix All) -->
+        <div id="tables-workspace" class="hidden bg-white text-slate-900 rounded-3xl p-5 sm:p-7 shadow-2xl border-4 border-indigo-200">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">⚡ Times Tables Dojo</h2>
+                    <p class="text-sm font-bold text-slate-500">Select today's target table (2× to 10× or Mix All) & earn up to 3 mastery stars per table!</p>
+                </div>
+                <button onclick="toggleCheatSheet()" class="btn-game bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs sm:text-sm px-4 py-2 rounded-2xl flex items-center gap-1.5">
+                    <span>📜</span> <span id="cheat-sheet-btn-text">Show Study Card</span>
+                </button>
+            </div>
+
+            <!-- Table Selector Pills (2x - 10x + Mix All) -->
+            <div class="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-5" id="table-selector-btns"></div>
+
+            <!-- Toggleable Study Card -->
+            <div id="dojo-cheat-sheet" class="hidden mb-5 bg-amber-50 border-2 border-amber-300 rounded-3xl p-4 sm:p-5 animate-pop">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-extrabold text-amber-950 text-base sm:text-lg" id="cheat-sheet-title">📜 Table of 2 Study Card</h3>
+                    <span class="text-xs font-bold text-amber-800">Read aloud before practicing!</span>
+                </div>
+                <div id="cheat-sheet-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center font-black text-sm sm:text-base text-slate-800"></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <!-- Left: Memory Rule, Interactive Dot Array & Skip-Counting Visual -->
+                <div class="lg:col-span-6 bg-indigo-50 border-2 border-indigo-200 rounded-3xl p-5 flex flex-col gap-3.5">
+                    <div class="flex items-center justify-between">
+                        <span class="bg-indigo-600 text-white text-xs font-extrabold px-3 py-1 rounded-full" id="dojo-table-badge">2× Table Secret</span>
+                        <span class="text-xs font-extrabold text-indigo-700" id="dojo-array-label">3 groups of 2 = 6</span>
+                    </div>
+                    <p id="dojo-memory-tip" class="text-sm sm:text-base font-bold text-slate-800 bg-white p-3.5 rounded-2xl border border-indigo-100"></p>
+                    <div class="bg-white rounded-2xl p-4 border border-indigo-100 flex flex-col items-center">
+                        <div id="dojo-array-visual" class="my-1 flex flex-col gap-1.5 items-center justify-center min-h-[110px]"></div>
+                        <div id="dojo-skip-visual" class="w-full mt-2 pt-2 border-t border-slate-100 overflow-x-auto flex justify-center"></div>
+                        <div class="flex items-center gap-2 mt-2.5">
+                            <span class="text-xs font-extrabold text-slate-500">Test groups:</span>
+                            <input type="range" id="dojo-rows-slider" min="1" max="10" value="3" oninput="updateDojoSlider(this.value)" class="accent-indigo-600 cursor-pointer">
+                            <span id="dojo-rows-val" class="text-sm font-black text-indigo-700 w-6">3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Quick Recall & Missing-Factor Arena -->
+                <div class="lg:col-span-6 bg-slate-900 text-white rounded-3xl p-5 sm:p-6 flex flex-col justify-between gap-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-amber-400 font-extrabold text-sm">🎯 Dojo Practice Arena</span>
+                        <span class="text-xs font-bold text-emerald-300 bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-700/50" id="dojo-progress">Table of 2 Mastered: 0 / 10</span>
+                    </div>
+
+                    <div class="bg-slate-800 rounded-2xl p-6 text-center border border-slate-700">
+                        <div id="dojo-question" class="text-4xl sm:text-5xl font-black text-white mb-2">2 × 3 = ?</div>
+                        <p id="dojo-hint" class="text-xs font-bold text-sky-300">Think in equal groups or missing factors!</p>
+                    </div>
+
+                    <div id="dojo-choices" class="grid grid-cols-2 gap-3"></div>
+
+                    <div class="flex items-center justify-between gap-2">
+                        <div id="dojo-feedback" class="text-left text-xs sm:text-sm font-extrabold min-h-[24px] text-emerald-400"></div>
+                        <button onclick="revealDojoVisual()" class="bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/50 text-amber-300 text-xs font-extrabold px-3 py-1.5 rounded-xl shrink-0">
+                            💡 Show Me How!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. MISSION CHECKUP / ASSESSMENTS WORKSPACE -->
+        <div id="assessment-workspace" class="hidden flex flex-col gap-5">
+            <!-- Setup & History View -->
+            <div id="assess-setup-view" class="bg-white text-slate-900 rounded-3xl p-5 sm:p-7 shadow-2xl border-4 border-indigo-200">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">📋 Mission Checkup (10-Question Assessment)</h2>
+                        <p class="text-sm font-bold text-slate-600">Earn Rocket Medals, build per-student records, and review visual strategies on missed questions!</p>
+                    </div>
+                    <label class="flex items-center gap-2 bg-slate-100 px-3.5 py-2 rounded-2xl cursor-pointer border border-slate-200">
+                        <input type="checkbox" id="assess-timer-toggle" class="w-4 h-4 accent-indigo-600">
+                        <span class="text-xs sm:text-sm font-extrabold text-slate-700">⏱️ Enable Calm Timer</span>
+                    </label>
+                </div>
+
+                <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-700 mb-2.5">1. Pick Today's Checkup Focus:</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                    <button onclick="selectAssessFocus('allround')" id="focus-allround" class="assess-focus-btn text-left p-4 rounded-2xl border-2 border-indigo-600 bg-indigo-50 transition flex items-start gap-3">
+                        <span class="text-2xl">🛸</span>
+                        <div>
+                            <div class="font-extrabold text-base text-slate-900">All-Round Explorer Checkup</div>
+                            <div class="text-xs font-bold text-slate-600">Mix of Addition, Subtraction, Missing (?), Method Choice & Word Problems</div>
+                        </div>
+                    </button>
+                    <button onclick="selectAssessFocus('addsub')" id="focus-addsub" class="assess-focus-btn text-left p-4 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 transition flex items-start gap-3">
+                        <span class="text-2xl">➕</span>
+                        <div>
+                            <div class="font-extrabold text-base text-slate-900">Addition & Subtraction Mastery</div>
+                            <div class="text-xs font-bold text-slate-600">Tests Make-10 (Tiokompisar), Number Line, Partitioning & Columns</div>
+                        </div>
+                    </button>
+                    <button onclick="selectAssessFocus('missing')" id="focus-missing" class="assess-focus-btn text-left p-4 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 transition flex items-start gap-3">
+                        <span class="text-2xl">🔍</span>
+                        <div>
+                            <div class="font-extrabold text-base text-slate-900">Missing Number Detective (? + x)</div>
+                            <div class="text-xs font-bold text-slate-600">Focused practice on finding missing values in equations</div>
+                        </div>
+                    </button>
+                    <button onclick="selectAssessFocus('tables')" id="focus-tables" class="assess-focus-btn text-left p-4 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 transition flex items-start gap-3">
+                        <span class="text-2xl">⚡</span>
+                        <div>
+                            <div class="font-extrabold text-base text-slate-900">Specific Times Table Test</div>
+                            <div class="text-xs font-bold text-slate-600">Test a single table (e.g., 2×, 5×) or Mixed Multiplication</div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Table Picker for Specific Times Table Test -->
+                <div id="assess-table-picker" class="hidden mb-5 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4">
+                    <div class="text-xs font-extrabold uppercase text-amber-900 mb-2">Which Times Table are we testing today?</div>
+                    <div class="flex flex-wrap gap-2" id="assess-table-pills"></div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-200">
+                    <div class="text-xs font-bold text-slate-500">
+                        Student: <span class="text-indigo-700 font-extrabold" id="assess-student-label">Explorer</span> • Difficulty: <span class="text-indigo-700 font-extrabold uppercase" id="assess-diff-label">Cadet (1–20)</span>
+                    </div>
+                    <button onclick="startAssessment()" class="btn-game bg-emerald-500 hover:bg-emerald-400 text-white font-display text-xl font-bold px-8 py-3.5 rounded-2xl shadow-lg">
+                        🚀 Start 10-Question Checkup!
+                    </button>
+                </div>
+
+                <!-- Saved Student Checkup History -->
+                <div class="mt-7 pt-5 border-t-2 border-slate-100">
+                    <h3 class="text-base font-extrabold text-slate-800 mb-3 flex items-center gap-2">📊 Past Checkup Progress Log</h3>
+                    <div id="assess-history-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                </div>
+            </div>
+
+            <!-- Active 10-Question Runner -->
+            <div id="assess-active-view" class="hidden bg-white text-slate-900 rounded-3xl p-5 sm:p-7 shadow-2xl border-4 border-amber-300 max-w-2xl mx-auto w-full">
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <span class="bg-indigo-600 text-white text-xs sm:text-sm font-extrabold px-3.5 py-1.5 rounded-full" id="assess-q-counter">Question 1 of 10</span>
+                    <div class="flex items-center gap-3">
+                        <span id="assess-timer-display" class="hidden bg-slate-100 text-slate-700 font-extrabold text-xs px-3 py-1.5 rounded-xl border border-slate-300">⏱️ 00:00</span>
+                        <button onclick="abortAssessment()" class="text-xs font-extrabold text-slate-400 hover:text-rose-500">Exit Checkup</button>
+                    </div>
+                </div>
+
+                <div id="assess-dots" class="grid grid-cols-10 gap-1.5 mb-5"></div>
+                <div id="assess-story-box" class="hidden mb-4 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-slate-800 text-base font-bold"></div>
+
+                <div class="py-6 px-4 bg-slate-50 rounded-3xl border-2 border-slate-200 text-center mb-4">
+                    <div id="assess-equation" class="text-4xl sm:text-5xl font-black text-slate-900 flex flex-wrap items-center justify-center gap-2.5"></div>
+                    <p id="assess-subhint" class="text-xs sm:text-sm font-bold text-slate-500 mt-2">Solve carefully — visual strategies unlock in your report at the end!</p>
+                </div>
+
+                <div id="assess-matcher-options" class="hidden grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3"></div>
+
+                <div id="assess-numeric-area" class="flex flex-col gap-3">
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <input type="text" id="assess-input" inputmode="numeric" readonly placeholder="?"
+                            class="w-full text-center text-3xl sm:text-4xl font-black bg-indigo-50 border-4 border-indigo-300 rounded-2xl py-3 text-indigo-950 outline-none" />
+                        <button onclick="submitAssessmentAnswer()" class="btn-game bg-indigo-600 hover:bg-indigo-500 text-white font-display text-xl font-bold px-6 sm:px-8 py-4 rounded-2xl shrink-0">
+                            Next →
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-6 gap-1.5 sm:gap-2">
+                        <button onclick="pressAssessNum('1')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">1</button>
+                        <button onclick="pressAssessNum('2')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">2</button>
+                        <button onclick="pressAssessNum('3')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">3</button>
+                        <button onclick="pressAssessNum('4')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">4</button>
+                        <button onclick="pressAssessNum('5')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">5</button>
+                        <button onclick="backspaceAssessNum()" class="btn-numpad bg-rose-100 hover:bg-rose-200 text-rose-700 font-black text-lg py-2.5 rounded-xl">⌫</button>
+                        <button onclick="pressAssessNum('6')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">6</button>
+                        <button onclick="pressAssessNum('7')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">7</button>
+                        <button onclick="pressAssessNum('8')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">8</button>
+                        <button onclick="pressAssessNum('9')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">9</button>
+                        <button onclick="pressAssessNum('0')" class="btn-numpad bg-slate-100 hover:bg-slate-200 text-slate-900 font-black text-xl py-2.5 rounded-xl">0</button>
+                        <button onclick="clearAssessNum()" class="btn-numpad bg-amber-100 hover:bg-amber-200 text-amber-800 font-extrabold text-sm py-2.5 rounded-xl">Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- End-of-Checkup Report Card & Visual Review -->
+            <div id="assess-report-view" class="hidden bg-white text-slate-900 rounded-3xl p-5 sm:p-7 shadow-2xl border-4 border-emerald-300 animate-pop">
+                <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b-2 border-slate-100">
+                    <div class="flex items-center gap-4">
+                        <div id="report-medal-icon" class="w-16 h-16 rounded-3xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-4xl shadow">🥇</div>
+                        <div>
+                            <span id="report-medal-title" class="text-xs font-extrabold uppercase tracking-wider text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">Gold Rocket Medal!</span>
+                            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1" id="report-score-headline">Score: 9 / 10</h2>
+                            <p class="text-xs sm:text-sm font-bold text-slate-500" id="report-meta"></p>
+                        </div>
+                    </div>
+                    <button onclick="resetAssessmentToSetup()" class="btn-game bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold px-5 py-3 rounded-2xl text-sm">
+                        ← New Checkup
+                    </button>
+                </div>
+
+                <div class="my-5 bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 sm:p-5">
+                    <h3 class="font-extrabold text-indigo-950 text-base mb-1.5 flex items-center gap-2">🧭 Parent & Explorer Skill Breakdown</h3>
+                    <p id="report-insight-text" class="text-sm font-bold text-slate-700 leading-relaxed"></p>
+                </div>
+
+                <h3 class="font-extrabold text-slate-800 text-base mb-3">🔍 Question-by-Question Review (Tap "See Visual Strategy" on any question):</h3>
+                <div id="report-questions-list" class="flex flex-col gap-3"></div>
+            </div>
+        </div>
+
+        <!-- 4. METHOD LAB GUIDE -->
+        <div id="lab-workspace" class="hidden bg-white text-slate-900 rounded-3xl p-5 sm:p-7 shadow-2xl border-4 border-indigo-200">
+            <div class="mb-5">
+                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">🔬 Astro-Bot's Method Lab</h2>
+                <p class="text-sm sm:text-base font-bold text-slate-600">Learn <strong>WHEN</strong> to use each Swedish & British math tool so you never get stuck!</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-sky-50 border-2 border-sky-200 rounded-3xl p-5 flex flex-col gap-2">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-lg font-extrabold text-sky-950">1. Make-10 (Tiokompisar)</h3>
+                        <span class="bg-sky-200 text-sky-900 text-xs font-extrabold px-2.5 py-1 rounded-lg">Best for: 7, 8, or 9 + single digit</span>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700"><strong>When to use:</strong> When a number is close to the next ten (like 8 + 5 or 19 + 6).</p>
+                    <p class="text-xs font-bold text-slate-600 bg-white p-3 rounded-xl border border-sky-100">
+                        Example: <strong>8 + 5</strong> → 8's ten-friend (<em>tiokompis</em>) is <strong>2</strong>. Split 5 into 2 + 3. First 8 + 2 = 10, then 10 + 3 = <strong>13</strong>!
+                    </p>
+                </div>
+
+                <div class="bg-emerald-50 border-2 border-emerald-200 rounded-3xl p-5 flex flex-col gap-2">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-lg font-extrabold text-emerald-950">2. Number Line (Tallinje)</h3>
+                        <span class="bg-emerald-200 text-emerald-900 text-xs font-extrabold px-2.5 py-1 rounded-lg">Best for: Missing ? & Subtraction</span>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700"><strong>When to use:</strong> Finding the jump gap in missing numbers (14 + ? = 22) or hopping backward when subtracting.</p>
+                    <p class="text-xs font-bold text-slate-600 bg-white p-3 rounded-xl border border-emerald-100">
+                        Example: <strong>14 + ? = 22</strong> → Start at 14. Jump <strong>+6</strong> to reach friendly 20, then jump <strong>+2</strong> to 22. Total jump = 6 + 2 = <strong>8</strong>!
+                    </p>
+                </div>
+
+                <div class="bg-amber-50 border-2 border-amber-200 rounded-3xl p-5 flex flex-col gap-2">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-lg font-extrabold text-amber-950">3. Split Tens & Ones (Partitioning)</h3>
+                        <span class="bg-amber-200 text-amber-900 text-xs font-extrabold px-2.5 py-1 rounded-lg">Best for: Mental 2-digit sums</span>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700"><strong>When to use:</strong> Adding two 2-digit numbers mentally when the ones don't overflow 10.</p>
+                    <p class="text-xs font-bold text-slate-600 bg-white p-3 rounded-xl border border-amber-100">
+                        Example: <strong>34 + 25</strong> → Add Tens first: 30 + 20 = <strong>50</strong>. Add Ones next: 4 + 5 = <strong>9</strong>. Put together: <strong>59</strong>!
+                    </p>
+                </div>
+
+                <div class="bg-purple-50 border-2 border-purple-200 rounded-3xl p-5 flex flex-col gap-2">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-lg font-extrabold text-purple-950">4. Column Method (Uppställning)</h3>
+                        <span class="bg-purple-200 text-purple-900 text-xs font-extrabold px-2.5 py-1 rounded-lg">Best for: Carrying & Bigger numbers</span>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700"><strong>When to use:</strong> Bigger numbers where ones make 10 or more (like 47 + 36) so carrying stays neat.</p>
+                    <p class="text-xs font-bold text-slate-600 bg-white p-3 rounded-xl border border-purple-100">
+                        Rule: Line up <strong>Tens (T)</strong> and <strong>Ones (O)</strong> vertically. Always add the <strong>Ones</strong> column on the right first!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- STUDENT PROFILES MODAL -->
+    <div id="profile-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-indigo-400 rounded-3xl max-w-md w-full p-6 shadow-2xl animate-pop">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-2xl font-bold text-white flex items-center gap-2">👤 Student Profiles</h3>
+                <button onclick="closeProfileModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-9 h-9 rounded-full font-bold">✕</button>
+            </div>
+            <p class="text-xs sm:text-sm text-indigo-200 font-semibold mb-4">
+                Every student's XP, Star Coins, badges, table mastery stars, and checkups are saved separately under their name.
+            </p>
+
+            <!-- Add New Student Form -->
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="new-student-input" maxlength="20" placeholder="Enter student's name..."
+                    class="flex-1 bg-slate-800 border-2 border-slate-600 focus:border-amber-400 rounded-2xl px-3.5 py-2.5 text-white font-bold text-sm outline-none" />
+                <button onclick="addOrSwitchStudent()" class="btn-game bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold px-4 py-2.5 rounded-2xl text-sm shrink-0">
+                    + Add / Use
+                </button>
+            </div>
+            <p id="profile-status-msg" class="text-xs font-bold text-rose-400 mb-3 min-h-[16px]"></p>
+
+            <!-- Existing Profiles List -->
+            <div class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">Saved Explorers:</div>
+            <div id="student-profiles-list" class="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1"></div>
+        </div>
+    </div>
+
+    <!-- BADGES & PROGRESS MODAL -->
+    <div id="badges-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-indigo-400 rounded-3xl max-w-lg w-full p-6 shadow-2xl animate-pop">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-2xl font-bold text-white flex items-center gap-2">🏆 <span id="badges-student-title">Explorer</span>'s Badges</h3>
+                <button onclick="toggleBadgesModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-9 h-9 rounded-full font-bold">✕</button>
+            </div>
+            <p class="text-sm text-indigo-200 font-semibold mb-4">Solve missions, master times tables, and complete checkups to unlock badges!</p>
+            <div id="badges-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5"></div>
+            <div class="flex justify-between items-center border-t border-slate-800 pt-4">
+                <button onclick="resetProgressPrompt()" class="text-xs text-rose-400 hover:text-rose-300 font-bold underline">Reset Current Student</button>
+                <button onclick="toggleBadgesModal()" class="btn-game bg-amber-400 text-slate-950 font-extrabold px-5 py-2 rounded-xl text-sm">Keep Exploring!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM RESET CONFIRMATION MODAL (No browser confirm()) -->
+    <div id="reset-confirm-modal" class="hidden fixed inset-0 bg-slate-950/85 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-rose-500 rounded-3xl max-w-sm w-full p-6 text-center animate-pop">
+            <div class="text-4xl mb-2">⚠️</div>
+            <h4 class="text-xl font-bold text-white mb-2">Reset <span id="reset-target-name">Explorer</span>'s Progress?</h4>
+            <p class="text-sm text-slate-300 mb-5">This clears saved Star Coins, XP, badges, table stars, and checkups for this student.</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeResetModal()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-4 py-2 rounded-xl">Cancel</button>
+                <button onclick="confirmResetProgress()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-4 py-2 rounded-xl">Yes, Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. MULTI-STUDENT PROFILE & STATE STORE
+        // ==========================================
+        const STORAGE_KEY = 'astromath_quest_profiles_v1';
+
+        function createEmptyStudentRecord(name) {
+            return {
+                name: name,
+                xp: 0,
+                level: 1,
+                stars: 0,
+                streak: 0,
+                solvedCount: 0,
+                missingSolved: 0,
+                strategyUsedCount: 0,
+                matcherSolved: 0,
+                tablesMastered: {}, // { 2: [1, 2, ...], 5: [...] }
+                assessmentHistory: [], // Array of report summaries
+                unlockedBadges: []
+            };
+        }
+
+        function createInitialStore() {
+            const defaultName = 'Leo';
+            return {
+                activeStudent: defaultName,
+                soundEnabled: true,
+                students: {
+                    [defaultName]: createEmptyStudentRecord(defaultName)
+                }
+            };
+        }
+
+        function loadStore() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && parsed.students && Object.keys(parsed.students).length > 0) {
+                        const active = parsed.students[parsed.activeStudent]
+                            ? parsed.activeStudent
+                            : Object.keys(parsed.students)[0];
+                        return {
+                            activeStudent: active,
+                            soundEnabled: parsed.soundEnabled !== undefined ? parsed.soundEnabled : true,
+                            students: parsed.students
+                        };
+                    }
+                }
+            } catch (err) {
+                console.warn('Could not load saved profiles:', err);
+            }
+            return createInitialStore();
+        }
+
+        let appStore = loadStore();
+
+        function getCurrentStudent() {
+            const name = appStore.activeStudent;
+            if (!appStore.students[name]) {
+                appStore.students[name] = createEmptyStudentRecord(name);
+            }
+            return appStore.students[name];
+        }
+
+        function saveStore() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appStore));
+            } catch (err) {
+                console.warn('Could not persist profiles:', err);
+            }
+            updateHeaderUI();
+        }
+
+        // ==========================================
+        // 2. WEB AUDIO API MUSICAL CUES
+        // ==========================================
+        let audioCtx = null;
+
+        function ensureAudioContext() {
+            if (!appStore.soundEnabled) return null;
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(() => {});
+            }
+            return audioCtx;
+        }
+
+        /**
+         * Plays distinct musical cues using synthesized notes:
+         * - 'click': soft UI tap
+         * - 'hint': gentle rising fifth interval
+         * - 'success': cheerful C-major ascending arpeggio
+         * - 'fanfare': celebratory chord progression for level-up or checkup completion
+         * - 'gentle_retry': warm low two-note marimba/cello nudge (never harsh)
+         */
+        function playMusicCue(type) {
+            const ctx = ensureAudioContext();
+            if (!ctx) return;
+
+            try {
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(540, now);
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } else if (type === 'hint') {
+                    [440, 659.25].forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+                        gain.gain.setValueAtTime(0.09, now + idx * 0.09);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.22);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.09);
+                        osc.stop(now + idx * 0.09 + 0.24);
+                    });
+                } else if (type === 'success') {
+                    // Cheerful ascending major arpeggio: C5 - E5 - G5 - C6
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const start = now + idx * 0.075;
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, start);
+                        gain.gain.setValueAtTime(0.001, start);
+                        gain.gain.linearRampToValueAtTime(0.14, start + 0.015);
+                        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.32);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(start);
+                        osc.stop(start + 0.34);
+                    });
+                } else if (type === 'fanfare') {
+                    // Bright celebratory melody for Level Up or Checkup Medal
+                    const melody = [
+                        { f: 523.25, t: 0.0, d: 0.14 },
+                        { f: 659.25, t: 0.12, d: 0.14 },
+                        { f: 783.99, t: 0.24, d: 0.14 },
+                        { f: 1046.50, t: 0.38, d: 0.45 }
+                    ];
+                    melody.forEach(n => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(n.f, now + n.t);
+                        gain.gain.setValueAtTime(0.15, now + n.t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + n.t);
+                        osc.stop(now + n.t + n.d + 0.03);
+                    });
+                } else if (type === 'gentle_retry') {
+                    // Gentle low two-note cadence (D3 -> Bb2) for encouraging retry
+                    const notes = [
+                        { f: 246.94, t: 0.0, d: 0.18 },
+                        { f: 196.00, t: 0.16, d: 0.26 }
+                    ];
+                    notes.forEach(n => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(n.f, now + n.t);
+                        gain.gain.setValueAtTime(0.12, now + n.t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + n.t);
+                        osc.stop(now + n.t + n.d + 0.03);
+                    });
+                }
+            } catch (err) {
+                console.warn('Audio playback skipped:', err);
+            }
+        }
+
+        function toggleSound() {
+            appStore.soundEnabled = !appStore.soundEnabled;
+            saveStore();
+            if (appStore.soundEnabled) {
+                playMusicCue('hint');
+            }
+        }
+
+        // ==========================================
+        // 3. RANKS, BADGES & STUDENT PROFILE MODAL
+        // ==========================================
+        const RANKS = [
+            'Space Cadet 🌑',
+            'Star Navigator 🧭',
+            'Planet Explorer 🪐',
+            'Comet Pilot ☄️',
+            'Nebula Captain 🚀',
+            'Galaxy Guardian 🌟'
+        ];
+
+        const BADGES_CATALOG = [
+            { id: 'first_launch', icon: '🚀', title: 'First Launch', desc: 'Solve your 1st mission', check: s => s.solvedCount >= 1 },
+            { id: 'streak_5', icon: '🔥', title: 'Hot Streak', desc: 'Get 5 answers in a row', check: s => s.streak >= 5 },
+            { id: 'detective', icon: '🔍', title: 'Number Detective', desc: 'Solve 5 Missing (?) puzzles', check: s => s.missingSolved >= 5 },
+            { id: 'strategist', icon: '🧠', title: 'Smart Strategist', desc: 'Use Strategy Helper 3 times', check: s => s.strategyUsedCount >= 3 },
+            { id: 'checkup_pro', icon: '📋', title: 'Checkup Champion', desc: 'Complete a 10-question Checkup', check: s => (s.assessmentHistory && s.assessmentHistory.length >= 1) },
+            { id: 'star_collector', icon: '🪙', title: 'Star Captain', desc: 'Collect 25 Star Coins', check: s => s.stars >= 25 }
+        ];
+
+        function checkBadges(student) {
+            if (!Array.isArray(student.unlockedBadges)) student.unlockedBadges = [];
+            BADGES_CATALOG.forEach(badge => {
+                if (!student.unlockedBadges.includes(badge.id) && badge.check(student)) {
+                    student.unlockedBadges.push(badge.id);
+                }
+            });
+        }
+
+        function openProfileModal() {
+            playMusicCue('click');
+            document.getElementById('profile-status-msg').textContent = '';
+            document.getElementById('new-student-input').value = '';
+            renderStudentProfilesList();
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            playMusicCue('click');
+            document.getElementById('profile-modal').classList.add('hidden');
+        }
+
+        function addOrSwitchStudent() {
+            const input = document.getElementById('new-student-input');
+            const statusEl = document.getElementById('profile-status-msg');
+            const cleanName = input.value.trim().replace(/\s+/g, ' ');
+
+            if (!cleanName) {
+                statusEl.textContent = 'Please type a student name first.';
+                return;
+            }
+
+            // Match existing profile case-insensitively if already created
+            const existingKey = Object.keys(appStore.students).find(
+                k => k.toLowerCase() === cleanName.toLowerCase()
+            );
+
+            if (existingKey) {
+                appStore.activeStudent = existingKey;
+            } else {
+                appStore.students[cleanName] = createEmptyStudentRecord(cleanName);
+                appStore.activeStudent = cleanName;
+            }
+
+            playMusicCue('success');
+            saveStore();
+            refreshActiveModeForStudent();
+            renderStudentProfilesList();
+            statusEl.className = 'text-xs font-bold text-emerald-400 mb-3 min-h-[16px]';
+            statusEl.textContent = `Switched to ${appStore.activeStudent}'s space log!`;
+            input.value = '';
+        }
+
+        function switchToStudent(name) {
+            if (!appStore.students[name]) return;
+            playMusicCue('click');
+            appStore.activeStudent = name;
+            saveStore();
+            refreshActiveModeForStudent();
+            renderStudentProfilesList();
+        }
+
+        function renderStudentProfilesList() {
+            const listEl = document.getElementById('student-profiles-list');
+            const names = Object.keys(appStore.students);
+            listEl.innerHTML = names.map(name => {
+                const rec = appStore.students[name];
+                const isCurrent = name === appStore.activeStudent;
+                return `
+                    <button onclick="switchToStudent('${name.replace(/'/g, "\\'")}')" class="w-full text-left p-3 rounded-2xl border-2 transition flex items-center justify-between gap-2 ${isCurrent ? 'bg-indigo-950 border-amber-400 text-white' : 'bg-slate-800/80 border-slate-700 text-slate-200 hover:bg-slate-800'}">
+                        <div>
+                            <div class="font-extrabold text-sm flex items-center gap-1.5">
+                                <span>${isCurrent ? '🚀' : '👨‍🚀'}</span>
+                                <span>${name}</span>
+                                ${isCurrent ? '<span class="text-[10px] bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-black">ACTIVE</span>' : ''}
+                            </div>
+                            <div class="text-xs text-slate-400 font-semibold mt-0.5">
+                                Level ${rec.level} • ${rec.stars} 🪙 • ${(rec.assessmentHistory || []).length} Checkups
+                            </div>
+                        </div>
+                        <span class="text-xs font-extrabold text-indigo-300">${rec.xp} XP</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function refreshActiveModeForStudent() {
+            if (currentMode === 'tables') {
+                initDojo();
+            } else if (currentMode === 'assessment') {
+                initAssessmentSetup();
+            } else if (currentMode !== 'lab') {
+                nextQuestion();
+            }
+        }
+
+        function toggleBadgesModal() {
+            playMusicCue('click');
+            const modal = document.getElementById('badges-modal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                const student = getCurrentStudent();
+                checkBadges(student);
+                saveStore();
+                document.getElementById('badges-student-title').textContent = student.name;
+                const grid = document.getElementById('badges-grid');
+                grid.innerHTML = BADGES_CATALOG.map(b => {
+                    const unlocked = student.unlockedBadges.includes(b.id);
+                    return `
+                        <div class="p-3.5 rounded-2xl border-2 text-center flex flex-col items-center gap-1 ${unlocked ? 'bg-indigo-950 border-amber-400 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-500 opacity-60'}">
+                            <span class="text-3xl">${unlocked ? b.icon : '🔒'}</span>
+                            <span class="font-extrabold text-xs sm:text-sm">${b.title}</span>
+                            <span class="text-[11px] leading-tight">${b.desc}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function resetProgressPrompt() {
+            const student = getCurrentStudent();
+            document.getElementById('reset-target-name').textContent = student.name;
+            document.getElementById('reset-confirm-modal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset-confirm-modal').classList.add('hidden');
+        }
+
+        function confirmResetProgress() {
+            const currentName = appStore.activeStudent;
+            appStore.students[currentName] = createEmptyStudentRecord(currentName);
+            saveStore();
+            closeResetModal();
+            document.getElementById('badges-modal').classList.add('hidden');
+            refreshActiveModeForStudent();
+        }
+
+        function updateHeaderUI() {
+            const student = getCurrentStudent();
+            document.getElementById('active-student-name').textContent = student.name;
+            document.getElementById('level-badge').textContent = `LVL ${student.level}`;
+            document.getElementById('xp-bar').style.width = `${Math.min(100, student.xp)}%`;
+            document.getElementById('xp-text').textContent = `${student.xp}/100 XP`;
+            document.getElementById('streak-count').textContent = student.streak;
+            document.getElementById('stars-count').textContent = student.stars;
+
+            const rankIdx = Math.min(RANKS.length - 1, Math.floor((student.level - 1) / 2));
+            document.getElementById('planet-title').textContent = `Rank: ${RANKS[rankIdx]}`;
+
+            document.getElementById('sound-icon').textContent = appStore.soundEnabled ? '🎵' : '🔇';
+            document.getElementById('sound-label').textContent = appStore.soundEnabled ? 'Music On' : 'Muted';
+        }
+
+        // ==========================================
+        // 4. PROBLEM & STRATEGY GENERATOR
+        // ==========================================
+        let currentMode = 'quest';
+        let currentDifficulty = 'easy';
+        let currentProblem = null;
+        let problemAnswered = false;
+        let strategyRevealedForCurrent = false;
+
+        function randInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateProblem(mode, difficulty, forcedCategory = null, forcedTable = null) {
+            let category = forcedCategory || 'standard';
+            if (!forcedCategory) {
+                if (mode === 'missing') category = 'missing';
+                else if (mode === 'stories') category = 'story';
+                else if (mode === 'quest' || mode === 'matcher') {
+                    const pool = ['make10', 'partition', 'column', 'subtraction', 'missing', 'multiplication'];
+                    category = pool[randInt(0, pool.length - 1)];
+                }
+            }
+
+            // Missing numbers: 14 + ? = 22, ? + b = total, total - ? = rem
+            if (category === 'missing') {
+                const subType = randInt(1, 3);
+                if (subType === 1) {
+                    const base = difficulty === 'easy' ? randInt(6, 15) : (difficulty === 'medium' ? randInt(13, 36) : randInt(24, 65));
+                    const gap = difficulty === 'easy' ? randInt(3, 9) : randInt(6, 18);
+                    const total = base + gap;
+                    return {
+                        type: 'missing',
+                        plainText: `${base} + ? = ${total}`,
+                        equationHTML: `<span>${base}</span> <span class="text-indigo-600">+</span> <span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span> <span class="text-indigo-600">=</span> <span>${total}</span>`,
+                        answer: gap,
+                        subhint: `How much do we jump from ${base} to reach ${total}?`,
+                        strategyKey: 'numberline_gap',
+                        strategyName: 'Number Line Jump-Up (Tallinje)',
+                        whyText: `When the middle number is missing (${base} + ? = ${total}), start at ${base} and count the jumps up to ${total}!`,
+                        visualData: { start: base, target: total, gap, mode: 'gap_up' }
+                    };
+                } else if (subType === 2) {
+                    const b = difficulty === 'easy' ? randInt(4, 9) : randInt(7, 19);
+                    const ans = difficulty === 'easy' ? randInt(4, 10) : randInt(8, 25);
+                    const total = ans + b;
+                    return {
+                        type: 'missing',
+                        plainText: `? + ${b} = ${total}`,
+                        equationHTML: `<span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span> <span class="text-indigo-600">+</span> <span>${b}</span> <span class="text-indigo-600">=</span> <span>${total}</span>`,
+                        answer: ans,
+                        subhint: `What number plus ${b} equals ${total}?`,
+                        strategyKey: 'numberline_gap',
+                        strategyName: 'Number Line / Inverse Gap (Tallinje)',
+                        whyText: `Start at ${b} and jump forward up to ${total} to find the missing starting amount!`,
+                        visualData: { start: b, target: total, gap: ans, mode: 'gap_up' }
+                    };
+                } else {
+                    const rem = difficulty === 'easy' ? randInt(4, 12) : randInt(12, 35);
+                    const gap = difficulty === 'easy' ? randInt(3, 8) : randInt(5, 16);
+                    const total = rem + gap;
+                    return {
+                        type: 'missing',
+                        plainText: `${total} − ? = ${rem}`,
+                        equationHTML: `<span>${total}</span> <span class="text-rose-600">−</span> <span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span> <span class="text-indigo-600">=</span> <span>${rem}</span>`,
+                        answer: gap,
+                        subhint: `How many were subtracted from ${total} to leave ${rem}?`,
+                        strategyKey: 'numberline_gap',
+                        strategyName: 'Number Line Difference (Tallinje)',
+                        whyText: `Find the distance between ${rem} and ${total} on the number line!`,
+                        visualData: { start: rem, target: total, gap, mode: 'gap_up' }
+                    };
+                }
+            }
+
+            // Space Stories / Word Problems
+            if (category === 'story') {
+                const stories = [
+                    () => {
+                        const a = difficulty === 'easy' ? randInt(7, 9) : randInt(17, 29);
+                        const b = randInt(4, 8);
+                        const ans = a + b;
+                        return {
+                            type: 'story',
+                            plainText: `${a} + ${b} = ?`,
+                            story: `🛸 Captain Leo found <strong>${a}</strong> glowing moon crystals in the morning and <strong>${b}</strong> more crystals in the afternoon. How many crystals does he have altogether?`,
+                            equationHTML: `<span>${a}</span> <span class="text-indigo-600">+</span> <span>${b}</span> <span class="text-indigo-600">=</span> <span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span>`,
+                            answer: ans,
+                            subhint: `"Altogether" means ADD!`,
+                            strategyKey: 'make10',
+                            strategyName: 'Make-10 Bridge (Tiokompisar)',
+                            whyText: `${a} is close to the next friendly ten! Bridge to the ten first using ${b}.`,
+                            visualData: { a, b, ans }
+                        };
+                    },
+                    () => {
+                        const rows = difficulty === 'easy' ? randInt(2, 4) : randInt(4, 7);
+                        const cols = difficulty === 'easy' ? randInt(3, 5) : randInt(4, 8);
+                        const ans = rows * cols;
+                        return {
+                            type: 'story',
+                            plainText: `${rows} × ${cols} = ?`,
+                            story: `🤖 Our space station has <strong>${rows}</strong> solar panels. Each panel has <strong>${cols}</strong> power cells. How many power cells are there in total?`,
+                            equationHTML: `<span>${rows}</span> <span class="text-indigo-600">×</span> <span>${cols}</span> <span class="text-indigo-600">=</span> <span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span>`,
+                            answer: ans,
+                            subhint: `Equal rows/groups means MULTIPLY!`,
+                            strategyKey: 'array',
+                            strategyName: 'Equal Groups / Array Grid',
+                            whyText: `Equal groups (${rows} rows of ${cols}) form an array grid you can count by rows or skip-count!`,
+                            visualData: { rows, cols, ans }
+                        };
+                    },
+                    () => {
+                        const total = difficulty === 'easy' ? randInt(18, 25) : randInt(35, 65);
+                        const used = difficulty === 'easy' ? randInt(5, 9) : randInt(12, 24);
+                        const ans = total - used;
+                        return {
+                            type: 'story',
+                            plainText: `${total} − ${used} = ?`,
+                            story: `🚀 The starship tank had <strong>${total}</strong> liters of rocket fuel. After blasting past Mars, it used <strong>${used}</strong> liters. How much fuel is left?`,
+                            equationHTML: `<span>${total}</span> <span class="text-rose-600">−</span> <span>${used}</span> <span class="text-indigo-600">=</span> <span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span>`,
+                            answer: ans,
+                            subhint: `"Used" and "left" means SUBTRACT!`,
+                            strategyKey: 'numberline_sub',
+                            strategyName: 'Number Line Jump-Back (Tallinje)',
+                            whyText: `Start at ${total} on the number line and jump backward to subtract ${used}.`,
+                            visualData: { start: total, sub: used, ans }
+                        };
+                    }
+                ];
+                return stories[randInt(0, stories.length - 1)]();
+            }
+
+            // Make-10 / Tiokompisar
+            if (category === 'make10') {
+                const onesA = [7, 8, 9][randInt(0, 2)];
+                const tensA = difficulty === 'easy' ? 0 : (difficulty === 'medium' ? randInt(1, 3) * 10 : randInt(3, 6) * 10);
+                const a = tensA + onesA;
+                const b = randInt(4, 8);
+                const ans = a + b;
+                return {
+                    type: 'make10',
+                    plainText: `${a} + ${b} = ?`,
+                    equationHTML: `<span>${a}</span> <span class="text-indigo-600">+</span> <span>${b}</span> <span class="text-indigo-600">=</span> <span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span>`,
+                    answer: ans,
+                    subhint: `Spot the near-ten number (${a})!`,
+                    strategyKey: 'make10',
+                    strategyName: 'Make-10 / Tiokompisar',
+                    whyText: `${a} ends in ${onesA}, which is just ${10 - onesA} away from the next ten (${a + (10 - onesA)})!`,
+                    visualData: { a, b, ans }
+                };
+            }
+
+            // Partitioning (Split Tens & Ones)
+            if (category === 'partition') {
+                const t1 = difficulty === 'easy' ? randInt(1, 3) : randInt(2, 5);
+                const o1 = randInt(1, 4);
+                const t2 = difficulty === 'easy' ? randInt(1, 2) : randInt(2, 4);
+                const o2 = randInt(1, 5);
+                const a = t1 * 10 + o1;
+                const b = t2 * 10 + o2;
+                const ans = a + b;
+                return {
+                    type: 'partition',
+                    plainText: `${a} + ${b} = ?`,
+                    equationHTML: `<span>${a}</span> <span class="text-indigo-600">+</span> <span>${b}</span> <span class="text-indigo-600">=</span> <span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span>`,
+                    answer: ans,
+                    subhint: `Try splitting into Tens and Ones!`,
+                    strategyKey: 'partition',
+                    strategyName: 'Partitioning (Split Tens & Ones)',
+                    whyText: `Adding Tens (${t1 * 10} + ${t2 * 10}) and Ones (${o1} + ${o2}) separately is fast and clear!`,
+                    visualData: { a, b, ans }
+                };
+            }
+
+            // Column Method / Uppställning
+            if (category === 'column') {
+                const t1 = difficulty === 'easy' ? randInt(1, 3) : randInt(2, 5);
+                const o1 = randInt(5, 8);
+                const t2 = difficulty === 'easy' ? randInt(1, 2) : randInt(1, 3);
+                const o2 = randInt(4, 9);
+                const a = t1 * 10 + o1;
+                const b = t2 * 10 + o2;
+                const ans = a + b;
+                return {
+                    type: 'column',
+                    plainText: `${a} + ${b} = ?`,
+                    equationHTML: `<span>${a}</span> <span class="text-indigo-600">+</span> <span>${b}</span> <span class="text-indigo-600">=</span> <span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span>`,
+                    answer: ans,
+                    subhint: `Bigger numbers! Line up Tens and Ones.`,
+                    strategyKey: 'column',
+                    strategyName: 'Column Method (Uppställning)',
+                    whyText: `Because ${o1} + ${o2} = ${o1 + o2} makes a new ten, vertical columns keep place value neat!`,
+                    visualData: { a, b, ans }
+                };
+            }
+
+            // Subtraction on Number Line
+            if (category === 'subtraction') {
+                const a = difficulty === 'easy' ? randInt(15, 28) : (difficulty === 'medium' ? randInt(32, 68) : randInt(54, 95));
+                const b = difficulty === 'easy' ? randInt(4, 9) : randInt(11, 26);
+                const ans = a - b;
+                return {
+                    type: 'subtraction',
+                    plainText: `${a} − ${b} = ?`,
+                    equationHTML: `<span>${a}</span> <span class="text-rose-600">−</span> <span>${b}</span> <span class="text-indigo-600">=</span> <span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span>`,
+                    answer: ans,
+                    subhint: `Jump backward from ${a}!`,
+                    strategyKey: 'numberline_sub',
+                    strategyName: 'Number Line Jump-Back (Tallinje)',
+                    whyText: `Hop backward on the number line from ${a} to subtract ${b}.`,
+                    visualData: { start: a, sub: b, ans }
+                };
+            }
+
+            // Multiplication Array
+            const cols = forcedTable ? forcedTable : (difficulty === 'easy' ? [2, 5, 10][randInt(0, 2)] : randInt(2, 10));
+            const rows = randInt(1, 10);
+            const ans = rows * cols;
+            return {
+                type: 'multiplication',
+                plainText: `${rows} × ${cols} = ?`,
+                equationHTML: `<span>${rows}</span> <span class="text-indigo-600">×</span> <span>${cols}</span> <span class="text-indigo-600">=</span> <span class="bg-amber-200 text-amber-950 px-4 py-1 rounded-2xl border-2 border-amber-400">?</span>`,
+                answer: ans,
+                subhint: `Think of ${rows} groups of ${cols}!`,
+                strategyKey: 'array',
+                strategyName: `Table of ${cols} Array & Skip-Count`,
+                whyText: `${rows} × ${cols} means ${rows} equal groups of ${cols}. Skip-counting by ${cols}s helps you remember fast!`,
+                visualData: { rows, cols, ans }
+            };
+        }
+
+        // ==========================================
+        // 5. SVG STRATEGY DIAGRAM RENDERERS
+        // ==========================================
+        function renderStrategyVisualSVG(problem) {
+            const key = problem.strategyKey;
+            const d = problem.visualData;
+
+            if (key === 'make10') {
+                const nextTen = Math.ceil((d.a + 1) / 10) * 10;
+                const need = nextTen - d.a;
+                const rest = d.b - need;
+                return `
+                <svg viewBox="0 0 340 145" class="w-full max-w-sm h-auto">
+                    <text x="85" y="34" font-size="24" font-weight="900" fill="#0f172a" text-anchor="middle">${d.a}</text>
+                    <text x="135" y="34" font-size="22" font-weight="900" fill="#6366f1" text-anchor="middle">+</text>
+                    <text x="195" y="34" font-size="24" font-weight="900" fill="#0f172a" text-anchor="middle">${d.b}</text>
+                    <line x1="190" y1="42" x2="155" y2="75" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="200" y1="42" x2="235" y2="75" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="152" cy="88" r="16" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.5"/>
+                    <text x="152" y="94" font-size="16" font-weight="900" fill="#b45309" text-anchor="middle">${need}</text>
+                    <circle cx="238" cy="88" r="16" fill="#e0e7ff" stroke="#6366f1" stroke-width="2.5"/>
+                    <text x="238" y="94" font-size="16" font-weight="900" fill="#3730a3" text-anchor="middle">${rest}</text>
+                    <path d="M 85 42 Q 115 125 145 102" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="4 3"/>
+                    <rect x="65" y="112" width="105" height="26" rx="10" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+                    <text x="117" y="130" font-size="14" font-weight="900" fill="#065f46" text-anchor="middle">${d.a} + ${need} = ${nextTen}</text>
+                    <rect x="185" y="112" width="135" height="26" rx="10" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+                    <text x="252" y="130" font-size="14" font-weight="900" fill="#5b21b6" text-anchor="middle">${nextTen} + ${rest} = ${d.ans}</text>
+                </svg>`;
+            }
+
+            if (key === 'numberline_gap') {
+                const nextTen = Math.ceil((d.start + 1) / 10) * 10;
+                const canBridge = nextTen < d.target && nextTen > d.start;
+                if (canBridge) {
+                    const jump1 = nextTen - d.start;
+                    const jump2 = d.target - nextTen;
+                    return `
+                    <svg viewBox="0 0 340 130" class="w-full max-w-sm h-auto">
+                        <line x1="25" y1="95" x2="315" y2="95" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="45" cy="95" r="5" fill="#0f172a"/>
+                        <text x="45" y="118" font-size="15" font-weight="900" fill="#0f172a" text-anchor="middle">${d.start}</text>
+                        <circle cx="175" cy="95" r="5" fill="#10b981"/>
+                        <text x="175" y="118" font-size="15" font-weight="900" fill="#059669" text-anchor="middle">${nextTen}</text>
+                        <circle cx="295" cy="95" r="5" fill="#6366f1"/>
+                        <text x="295" y="118" font-size="15" font-weight="900" fill="#4f46e5" text-anchor="middle">${d.target}</text>
+                        <path d="M 45 90 Q 110 25 173 88" fill="none" stroke="#10b981" stroke-width="3"/>
+                        <rect x="85" y="34" width="46" height="22" rx="8" fill="#d1fae5"/>
+                        <text x="108" y="50" font-size="14" font-weight="900" fill="#065f46" text-anchor="middle">+${jump1}</text>
+                        <path d="M 177 90 Q 235 30 293 88" fill="none" stroke="#6366f1" stroke-width="3"/>
+                        <rect x="212" y="34" width="46" height="22" rx="8" fill="#e0e7ff"/>
+                        <text x="235" y="50" font-size="14" font-weight="900" fill="#3730a3" text-anchor="middle">+${jump2}</text>
+                    </svg>`;
+                }
+                return `
+                <svg viewBox="0 0 340 130" class="w-full max-w-sm h-auto">
+                    <line x1="35" y1="95" x2="305" y2="95" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="65" cy="95" r="5" fill="#0f172a"/>
+                    <text x="65" y="118" font-size="16" font-weight="900" fill="#0f172a" text-anchor="middle">${d.start}</text>
+                    <circle cx="275" cy="95" r="5" fill="#6366f1"/>
+                    <text x="275" y="118" font-size="16" font-weight="900" fill="#4f46e5" text-anchor="middle">${d.target}</text>
+                    <path d="M 65 90 Q 170 20 272 88" fill="none" stroke="#f59e0b" stroke-width="3.5"/>
+                    <rect x="135" y="30" width="70" height="24" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="170" y="47" font-size="15" font-weight="900" fill="#b45309" text-anchor="middle">+${d.gap} jumps</text>
+                </svg>`;
+            }
+
+            if (key === 'numberline_sub') {
+                const tens = Math.floor(d.sub / 10) * 10;
+                const ones = d.sub % 10;
+                const mid = d.start - tens;
+                if (tens > 0 && ones > 0) {
+                    return `
+                    <svg viewBox="0 0 340 130" class="w-full max-w-sm h-auto">
+                        <line x1="25" y1="95" x2="315" y2="95" stroke="#334155" stroke-width="3"/>
+                        <circle cx="50" cy="95" r="5" fill="#10b981"/>
+                        <text x="50" y="118" font-size="15" font-weight="900" fill="#059669" text-anchor="middle">${d.ans}</text>
+                        <circle cx="165" cy="95" r="5" fill="#6366f1"/>
+                        <text x="165" y="118" font-size="15" font-weight="900" fill="#4f46e5" text-anchor="middle">${mid}</text>
+                        <circle cx="290" cy="95" r="5" fill="#0f172a"/>
+                        <text x="290" y="118" font-size="15" font-weight="900" fill="#0f172a" text-anchor="middle">${d.start}</text>
+                        <path d="M 290 90 Q 228 25 168 88" fill="none" stroke="#e11d48" stroke-width="3"/>
+                        <rect x="205" y="34" width="46" height="22" rx="8" fill="#ffe4e6"/>
+                        <text x="228" y="50" font-size="14" font-weight="900" fill="#be123c" text-anchor="middle">-${tens}</text>
+                        <path d="M 163 90 Q 106 30 53 88" fill="none" stroke="#f59e0b" stroke-width="3"/>
+                        <rect x="85" y="34" width="46" height="22" rx="8" fill="#fef3c7"/>
+                        <text x="108" y="50" font-size="14" font-weight="900" fill="#b45309" text-anchor="middle">-${ones}</text>
+                    </svg>`;
+                }
+                return `
+                <svg viewBox="0 0 340 130" class="w-full max-w-sm h-auto">
+                    <line x1="35" y1="95" x2="305" y2="95" stroke="#334155" stroke-width="3"/>
+                    <circle cx="65" cy="95" r="5" fill="#10b981"/>
+                    <text x="65" y="118" font-size="16" font-weight="900" fill="#059669" text-anchor="middle">${d.ans}</text>
+                    <circle cx="275" cy="95" r="5" fill="#0f172a"/>
+                    <text x="275" y="118" font-size="16" font-weight="900" fill="#0f172a" text-anchor="middle">${d.start}</text>
+                    <path d="M 275 90 Q 170 20 68 88" fill="none" stroke="#e11d48" stroke-width="3.5"/>
+                    <rect x="135" y="30" width="70" height="24" rx="8" fill="#ffe4e6"/>
+                    <text x="170" y="47" font-size="15" font-weight="900" fill="#be123c" text-anchor="middle">−${d.sub} back</text>
+                </svg>`;
+            }
+
+            if (key === 'partition') {
+                const tA = Math.floor(d.a / 10) * 10, oA = d.a % 10;
+                const tB = Math.floor(d.b / 10) * 10, oB = d.b % 10;
+                return `
+                <svg viewBox="0 0 340 140" class="w-full max-w-sm h-auto">
+                    <rect x="15" y="12" width="145" height="65" rx="14" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="87" y="34" font-size="12" font-weight="900" fill="#1d4ed8" text-anchor="middle">1. ADD TENS</text>
+                    <text x="87" y="60" font-size="18" font-weight="900" fill="#1e3a8a" text-anchor="middle">${tA} + ${tB} = ${tA + tB}</text>
+                    <rect x="180" y="12" width="145" height="65" rx="14" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="252" y="34" font-size="12" font-weight="900" fill="#b45309" text-anchor="middle">2. ADD ONES</text>
+                    <text x="252" y="60" font-size="18" font-weight="900" fill="#78350f" text-anchor="middle">${oA} + ${oB} = ${oA + oB}</text>
+                    <rect x="55" y="90" width="230" height="38" rx="14" fill="#d1fae5" stroke="#10b981" stroke-width="2.5"/>
+                    <text x="170" y="115" font-size="17" font-weight="900" fill="#065f46" text-anchor="middle">${tA + tB} + ${oA + oB} = ${d.ans}</text>
+                </svg>`;
+            }
+
+            if (key === 'column') {
+                const tA = Math.floor(d.a / 10), oA = d.a % 10;
+                const tB = Math.floor(d.b / 10), oB = d.b % 10;
+                const carry = (oA + oB) >= 10;
+                const ansT = Math.floor(d.ans / 10), ansO = d.ans % 10;
+                return `
+                <svg viewBox="0 0 320 150" class="w-full max-w-xs h-auto">
+                    <text x="145" y="22" font-size="12" font-weight="900" fill="#3b82f6" text-anchor="middle">T (Tens)</text>
+                    <text x="205" y="22" font-size="12" font-weight="900" fill="#f59e0b" text-anchor="middle">O (Ones)</text>
+                    ${carry ? `<circle cx="145" cy="40" r="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                               <text x="145" y="45" font-size="13" font-weight="900" fill="#b45309" text-anchor="middle">1</text>` : ''}
+                    <text x="145" y="72" font-size="24" font-weight="900" fill="#0f172a" text-anchor="middle">${tA}</text>
+                    <text x="205" y="72" font-size="24" font-weight="900" fill="#0f172a" text-anchor="middle">${oA}</text>
+                    <text x="105" y="102" font-size="24" font-weight="900" fill="#6366f1" text-anchor="middle">+</text>
+                    <text x="145" y="102" font-size="24" font-weight="900" fill="#0f172a" text-anchor="middle">${tB}</text>
+                    <text x="205" y="102" font-size="24" font-weight="900" fill="#0f172a" text-anchor="middle">${oB}</text>
+                    <line x1="95" y1="112" x2="225" y2="112" stroke="#0f172a" stroke-width="3"/>
+                    <text x="145" y="138" font-size="26" font-weight="900" fill="#059669" text-anchor="middle">${ansT}</text>
+                    <text x="205" y="138" font-size="26" font-weight="900" fill="#059669" text-anchor="middle">${ansO}</text>
+                </svg>`;
+            }
+
+            if (key === 'array') {
+                const maxR = Math.min(d.rows, 8);
+                const maxC = Math.min(d.cols, 10);
+                let dots = '';
+                const spacing = 22;
+                const startX = 170 - ((maxC - 1) * spacing) / 2;
+                const startY = 25;
+                for (let r = 0; r < maxR; r++) {
+                    for (let c = 0; c < maxC; c++) {
+                        dots += `<circle cx="${startX + c * spacing}" cy="${startY + r * 16}" r="6" fill="${r % 2 === 0 ? '#6366f1' : '#f59e0b'}"/>`;
+                    }
+                }
+                const height = startY + maxR * 16 + 15;
+                return `
+                <svg viewBox="0 0 340 ${height}" class="w-full max-w-sm h-auto">
+                    ${dots}
+                    <text x="170" y="${height - 3}" font-size="13" font-weight="900" fill="#1e293b" text-anchor="middle">${d.rows} rows × ${d.cols} dots = ${d.ans}</text>
+                </svg>`;
+            }
+
+            return '';
+        }
+
+        function getStrategyStepsText(problem) {
+            const d = problem.visualData;
+            switch (problem.strategyKey) {
+                case 'make10': {
+                    const nextTen = Math.ceil((d.a + 1) / 10) * 10;
+                    const need = nextTen - d.a;
+                    const rest = d.b - need;
+                    return `Step 1: ${d.a} needs ${need} to reach ${nextTen}.<br>Step 2: ${nextTen} + remaining ${rest} = ${d.ans}!`;
+                }
+                case 'numberline_gap':
+                    return `Start at ${d.start} and count forward jumps until reaching ${d.target}. Total jump = ${d.gap}!`;
+                case 'numberline_sub':
+                    return `Start at ${d.start} and hop backward by ${d.sub} to land on ${d.ans}!`;
+                case 'partition': {
+                    const tA = Math.floor(d.a / 10) * 10, oA = d.a % 10;
+                    const tB = Math.floor(d.b / 10) * 10, oB = d.b % 10;
+                    return `Tens: ${tA} + ${tB} = ${tA + tB}. Ones: ${oA} + ${oB} = ${oA + oB}. Total: ${d.ans}!`;
+                }
+                case 'column':
+                    return `Add Ones on the right first (${d.a % 10} + ${d.b % 10}), carry any 10 to Tens, then add Tens!`;
+                case 'array':
+                    return `Skip-count by ${d.cols}s, ${d.rows} times to reach ${d.ans}!`;
+                default:
+                    return '';
+            }
+        }
+
+        // ==========================================
+        // 6. MAIN MODES & INTERACTIONS
+        // ==========================================
+        function setMode(mode) {
+            playMusicCue('click');
+            currentMode = mode;
+
+            document.querySelectorAll('.mode-tab').forEach(btn => {
+                btn.classList.remove('bg-amber-400', 'text-slate-950', 'shadow');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+            });
+            const activeTab = document.getElementById(`tab-${mode}`);
+            if (activeTab) {
+                activeTab.classList.remove('bg-slate-800', 'text-slate-300');
+                activeTab.classList.add('bg-amber-400', 'text-slate-950', 'shadow');
+            }
+
+            document.getElementById('question-workspace').classList.add('hidden');
+            document.getElementById('tables-workspace').classList.add('hidden');
+            document.getElementById('assessment-workspace').classList.add('hidden');
+            document.getElementById('lab-workspace').classList.add('hidden');
+
+            if (mode === 'tables') {
+                document.getElementById('tables-workspace').classList.remove('hidden');
+                initDojo();
+            } else if (mode === 'assessment') {
+                document.getElementById('assessment-workspace').classList.remove('hidden');
+                initAssessmentSetup();
+            } else if (mode === 'lab') {
+                document.getElementById('lab-workspace').classList.remove('hidden');
+            } else {
+                document.getElementById('question-workspace').classList.remove('hidden');
+                nextQuestion();
+            }
+        }
+
+        function setDifficulty(diff) {
+            playMusicCue('click');
+            currentDifficulty = diff;
+            ['easy', 'medium', 'hard'].forEach(d => {
+                const el = document.getElementById(`diff-${d}`);
+                el.className = d === diff
+                    ? 'px-2.5 py-1 rounded-lg text-xs font-extrabold bg-emerald-500 text-white transition'
+                    : 'px-2.5 py-1 rounded-lg text-xs font-extrabold text-slate-600 hover:bg-slate-200 transition';
+            });
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            currentProblem = generateProblem(currentMode, currentDifficulty);
+            problemAnswered = false;
+            strategyRevealedForCurrent = false;
+
+            document.getElementById('strategy-locked').classList.remove('hidden');
+            document.getElementById('strategy-revealed').classList.add('hidden');
+            document.getElementById('feedback-banner').classList.add('hidden');
+
+            const storyBox = document.getElementById('story-box');
+            if (currentProblem.story) {
+                storyBox.innerHTML = currentProblem.story;
+                storyBox.classList.remove('hidden');
+            } else {
+                storyBox.classList.add('hidden');
+            }
+
+            document.getElementById('equation-display').innerHTML = currentProblem.equationHTML;
+            document.getElementById('question-subhint').textContent = currentProblem.subhint;
+
+            const badgeLabels = {
+                quest: '🛸 Space Fuel Mission',
+                missing: '🔍 Missing Number Mystery',
+                matcher: '🧠 Strategy Matcher Challenge',
+                stories: '📖 Galactic Word Problem'
+            };
+            document.getElementById('mission-badge').textContent = badgeLabels[currentMode] || '🚀 Math Mission';
+
+            const numericArea = document.getElementById('numeric-input-area');
+            const matcherArea = document.getElementById('matcher-options');
+
+            if (currentMode === 'matcher') {
+                numericArea.classList.add('hidden');
+                matcherArea.classList.remove('hidden');
+                document.getElementById('question-subhint').textContent = 'Which math trick is the SMARTEST way to solve this?';
+                renderMatcherChoices(currentProblem);
+            } else {
+                matcherArea.classList.add('hidden');
+                numericArea.classList.remove('hidden');
+                const input = document.getElementById('answer-input');
+                input.value = '';
+                input.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-rose-500', 'bg-rose-50');
+                input.classList.add('border-indigo-300', 'bg-indigo-50');
+            }
+        }
+
+        function renderMatcherChoices(problem) {
+            const allStrategies = [
+                { key: 'make10', label: 'Make-10 (Tiokompisar)', sub: 'Close to a friendly 10!' },
+                { key: 'numberline_gap', label: 'Number Line Jump-Up', sub: 'Count the gap to the target' },
+                { key: 'numberline_sub', label: 'Number Line Jump-Back', sub: 'Hop backward on Tallinje' },
+                { key: 'partition', label: 'Split Tens & Ones', sub: 'Add Tens, then add Ones' },
+                { key: 'column', label: 'Column Method (Uppställning)', sub: 'Line up Tens & Ones vertically' },
+                { key: 'array', label: 'Equal Groups / Array', sub: 'Rows × Columns grid' }
+            ];
+
+            const correctObj = allStrategies.find(s => s.key === problem.strategyKey);
+            const others = allStrategies.filter(s => s.key !== problem.strategyKey).sort(() => Math.random() - 0.5).slice(0, 3);
+            const choices = [correctObj, ...others].sort(() => Math.random() - 0.5);
+
+            document.getElementById('matcher-options').innerHTML = choices.map(c => `
+                <button onclick="checkMatcherChoice('${c.key}')" class="btn-game text-left p-3.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 transition flex flex-col">
+                    <span class="font-extrabold text-indigo-950 text-sm sm:text-base">${c.label}</span>
+                    <span class="text-xs font-bold text-slate-500">${c.sub}</span>
+                </button>
+            `).join('');
+        }
+
+        function checkMatcherChoice(chosenKey) {
+            if (problemAnswered) return;
+            if (chosenKey === currentProblem.strategyKey) {
+                problemAnswered = true;
+                const student = getCurrentStudent();
+                student.matcherSolved += 1;
+                revealStrategy(true);
+                handleSuccess(`Spot on! ${currentProblem.strategyName} is the best tool here! (+1 🪙)`);
+            } else {
+                playMusicCue('gentle_retry');
+                showFeedback(false, 'Not quite! Look at the numbers — is it near 10, a missing gap, or equal rows?');
+            }
+        }
+
+        function revealStrategy(silent = false) {
+            if (!silent) playMusicCue('hint');
+            const student = getCurrentStudent();
+            if (!strategyRevealedForCurrent) {
+                strategyRevealedForCurrent = true;
+                student.strategyUsedCount += 1;
+                checkBadges(student);
+                saveStore();
+            }
+
+            document.getElementById('strategy-locked').classList.add('hidden');
+            document.getElementById('strategy-revealed').classList.remove('hidden');
+            document.getElementById('strat-name').textContent = currentProblem.strategyName;
+            document.getElementById('strat-why').textContent = currentProblem.whyText;
+            document.getElementById('strat-visual').innerHTML = renderStrategyVisualSVG(currentProblem);
+            document.getElementById('strat-steps').innerHTML = getStrategyStepsText(currentProblem);
+        }
+
+        function pressNum(digit) {
+            if (problemAnswered || currentMode === 'matcher' || currentMode === 'tables' || currentMode === 'lab') return;
+            playMusicCue('click');
+            const input = document.getElementById('answer-input');
+            if (input.value.length < 4) input.value += digit;
+        }
+
+        function backspaceNum() {
+            if (problemAnswered) return;
+            playMusicCue('click');
+            const input = document.getElementById('answer-input');
+            input.value = input.value.slice(0, -1);
+        }
+
+        function clearNum() {
+            if (problemAnswered) return;
+            playMusicCue('click');
+            document.getElementById('answer-input').value = '';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (currentMode === 'assessment') {
+                if (!document.getElementById('assess-active-view').classList.contains('hidden')) {
+                    if (e.key >= '0' && e.key <= '9') pressAssessNum(e.key);
+                    else if (e.key === 'Backspace') backspaceAssessNum();
+                    else if (e.key === 'Enter') submitAssessmentAnswer();
+                }
+                return;
+            }
+            if (currentMode === 'tables' || currentMode === 'lab' || currentMode === 'matcher') return;
+            if (e.key >= '0' && e.key <= '9') pressNum(e.key);
+            else if (e.key === 'Backspace') backspaceNum();
+            else if (e.key === 'Enter') {
+                if (problemAnswered) nextQuestion();
+                else checkAnswer();
+            }
+        });
+
+        function checkAnswer() {
+            if (problemAnswered) return;
+            const input = document.getElementById('answer-input');
+            const val = parseInt(input.value, 10);
+
+            if (isNaN(val)) {
+                playMusicCue('gentle_retry');
+                input.classList.add('animate-shake');
+                setTimeout(() => input.classList.remove('animate-shake'), 350);
+                return;
+            }
+
+            if (val === currentProblem.answer) {
+                problemAnswered = true;
+                const student = getCurrentStudent();
+                input.classList.remove('border-indigo-300', 'bg-indigo-50', 'border-rose-500', 'bg-rose-50');
+                input.classList.add('border-emerald-500', 'bg-emerald-50');
+                if (currentProblem.type === 'missing') student.missingSolved += 1;
+                revealStrategy(true);
+                handleSuccess();
+            } else {
+                playMusicCue('gentle_retry');
+                const student = getCurrentStudent();
+                student.streak = 0;
+                saveStore();
+                input.classList.remove('border-indigo-300', 'bg-indigo-50');
+                input.classList.add('border-rose-500', 'bg-rose-50', 'animate-shake');
+                setTimeout(() => input.classList.remove('animate-shake'), 350);
+                showFeedback(false, 'Close! Try again or tap "Show Me How!" for a visual trick.');
+            }
+        }
+
+        function handleSuccess(customMessage) {
+            const student = getCurrentStudent();
+            student.solvedCount += 1;
+            student.streak += 1;
+            student.stars += 1;
+            student.xp += 20;
+
+            let leveledUp = false;
+            if (student.xp >= 100) {
+                student.level += 1;
+                student.xp -= 100;
+                leveledUp = true;
+            }
+
+            playMusicCue(leveledUp ? 'fanfare' : 'success');
+            checkBadges(student);
+            saveStore();
+
+            const cheers = [
+                `Superb work, ${student.name}! (+1 🪙)`,
+                `Awesome math power, ${student.name}! (+1 🪙)`,
+                `Spot on! Thrusters boosted! (+1 🪙)`,
+                `Brilliant brainwork! (+1 🪙)`
+            ];
+            const msg = leveledUp
+                ? `🎉 Level Up! ${student.name} reached Level ${student.level}! (+1 🪙)`
+                : (customMessage || cheers[randInt(0, cheers.length - 1)]);
+            showFeedback(true, msg);
+        }
+
+        function showFeedback(isSuccess, message) {
+            const banner = document.getElementById('feedback-banner');
+            const icon = document.getElementById('feedback-icon');
+            const text = document.getElementById('feedback-text');
+            const nextBtn = document.getElementById('next-btn');
+
+            banner.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-950', 'border-emerald-300', 'bg-rose-100', 'text-rose-950', 'border-rose-300');
+            banner.classList.add('border-2');
+
+            if (isSuccess) {
+                banner.classList.add('bg-emerald-100', 'text-emerald-950', 'border-emerald-300');
+                icon.textContent = '🎉';
+                nextBtn.classList.remove('hidden');
+            } else {
+                banner.classList.add('bg-rose-100', 'text-rose-950', 'border-rose-300');
+                icon.textContent = '🎵';
+                nextBtn.classList.add('hidden');
+            }
+            text.textContent = message;
+        }
+
+        // ==========================================
+        // 7. TIMES TABLES DOJO (2x to 10x + Mix All)
+        // ==========================================
+        let selectedDojoTable = 2;
+        let currentDojoMult = 3;
+        let activeDojoQuestionTable = 2;
+
+        const TABLE_TRICKS = {
+            2: 'Double It! Multiplying by 2 means adding a number to itself (2 × 7 = 7 + 7 = 14). Every answer is even!',
+            3: 'Double + 1 Group! For 3 × 4, double 4 (= 8) and add one more 4 (= 12).',
+            4: 'Double, then Double Again! For 4 × 6: double 6 is 12, and double 12 is 24!',
+            5: 'Clock & Half-of-10 Trick! Answers ALWAYS end in 0 or 5. Count by 5s around a clock!',
+            6: '5× Plus One More Group! Do 5× first, then add one extra group (6 × 4 = 20 + 4 = 24).',
+            7: '5× + 2× Split Trick! Split 7 into 5 + 2. For 7 × 4: (5 × 4 = 20) + (2 × 4 = 8) = 28!',
+            8: 'Double 3 Times! For 8 × 3: 3 → 6 → 12 → 24!',
+            9: '10× Minus One Group! For 9 × 4, do 10 × 4 (= 40) minus 4 = 36. Digits also add to 9!',
+            10: 'Zero Power! Place a 0 at the end of the number (10 × 7 = 70).',
+            mix: 'Mix All Challenge! Use your favorite tricks: Double for 2×, Clock-5s for 5×, and 10× minus 1 for 9×!'
+        };
+
+        function getTableStars(t) {
+            if (t === 'mix') return '';
+            const student = getCurrentStudent();
+            const count = ((student.tablesMastered && student.tablesMastered[t]) || []).length;
+            if (count >= 10) return '⭐⭐⭐';
+            if (count >= 6) return '⭐⭐';
+            if (count >= 3) return '⭐';
+            return '☆☆☆';
+        }
+
+        function initDojo() {
+            const btnContainer = document.getElementById('table-selector-btns');
+            btnContainer.innerHTML = '';
+            const tablesList = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'mix'];
+            tablesList.forEach(t => {
+                const isSel = t === selectedDojoTable;
+                const label = t === 'mix' ? 'Mix All' : `${t}×`;
+                const stars = t === 'mix' ? '🎲' : getTableStars(t);
+                btnContainer.innerHTML += `
+                    <button onclick="selectDojoTable(${typeof t === 'string' ? `'${t}'` : t})" class="px-2 py-2 rounded-2xl font-black text-xs sm:text-sm transition flex flex-col items-center justify-center border-2 ${isSel ? 'bg-indigo-600 border-indigo-700 text-white shadow-md scale-105' : 'bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200'}">
+                        <span>${label}</span>
+                        <span class="text-[10px] leading-none mt-1">${stars}</span>
+                    </button>
+                `;
+            });
+            selectDojoTable(selectedDojoTable);
+        }
+
+        function selectDojoTable(t) {
+            selectedDojoTable = t;
+            const titleLabel = t === 'mix' ? 'Mix All Tables' : `Table of ${t} (${t}×)`;
+            document.getElementById('dojo-table-badge').textContent = `${titleLabel} Secret`;
+            document.getElementById('dojo-memory-tip').textContent = TABLE_TRICKS[t];
+            renderCheatSheet(t);
+
+            const tablesList = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'mix'];
+            document.querySelectorAll('#table-selector-btns button').forEach((b, idx) => {
+                const item = tablesList[idx];
+                const isSel = item === t;
+                b.className = `px-2 py-2 rounded-2xl font-black text-xs sm:text-sm transition flex flex-col items-center justify-center border-2 ${isSel ? 'bg-indigo-600 border-indigo-700 text-white shadow-md scale-105' : 'bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200'}`;
+                const starsSpan = b.querySelector('span:last-child');
+                if (starsSpan && item !== 'mix') starsSpan.textContent = getTableStars(item);
+            });
+
+            nextDojoQuestion();
+        }
+
+        function renderCheatSheet(t) {
+            const activeTable = t === 'mix' ? 2 : t;
+            document.getElementById('cheat-sheet-title').textContent = t === 'mix'
+                ? '📜 Quick Reference (Sample: 2× Table)'
+                : `📜 Table of ${t} (${t}×) Study Card`;
+            let html = '';
+            for (let i = 1; i <= 10; i++) {
+                html += `<div class="bg-white border border-amber-200 rounded-xl py-1.5 px-2 shadow-sm">${i} × ${activeTable} = <span class="text-indigo-700">${i * activeTable}</span></div>`;
+            }
+            document.getElementById('cheat-sheet-grid').innerHTML = html;
+        }
+
+        function toggleCheatSheet() {
+            playMusicCue('click');
+            const box = document.getElementById('dojo-cheat-sheet');
+            box.classList.toggle('hidden');
+            document.getElementById('cheat-sheet-btn-text').textContent = box.classList.contains('hidden') ? 'Show Study Card' : 'Hide Study Card';
+        }
+
+        function updateDojoSlider(rows, tableOverride = null) {
+            rows = parseInt(rows, 10);
+            const activeTable = tableOverride || (selectedDojoTable === 'mix' ? 5 : selectedDojoTable);
+            document.getElementById('dojo-rows-val').textContent = rows;
+            document.getElementById('dojo-array-label').textContent = `${rows} groups of ${activeTable} = ${rows * activeTable}`;
+
+            const grid = document.getElementById('dojo-array-visual');
+            let html = '';
+            for (let r = 0; r < rows; r++) {
+                let rowDots = '';
+                for (let c = 0; c < activeTable; c++) {
+                    rowDots += `<span class="w-3.5 h-3.5 rounded-full inline-block ${r % 2 === 0 ? 'bg-indigo-500' : 'bg-amber-400'}"></span>`;
+                }
+                html += `<div class="flex gap-1.5">${rowDots}</div>`;
+            }
+            grid.innerHTML = html;
+
+            const skipBox = document.getElementById('dojo-skip-visual');
+            const skipBadges = [];
+            for (let i = 1; i <= rows; i++) {
+                skipBadges.push(`<span class="bg-emerald-100 text-emerald-900 border border-emerald-300 font-black text-xs px-2 py-0.5 rounded-lg">${i * activeTable}</span>`);
+            }
+            skipBox.innerHTML = `<div class="flex flex-wrap items-center justify-center gap-1"><span class="text-[11px] font-extrabold text-slate-400 mr-1">Skip-count:</span>${skipBadges.join('<span class="text-slate-400 text-xs">→</span>')}</div>`;
+        }
+
+        function nextDojoQuestion() {
+            const student = getCurrentStudent();
+            activeDojoQuestionTable = selectedDojoTable === 'mix' ? randInt(2, 10) : selectedDojoTable;
+            const mastered = (student.tablesMastered && student.tablesMastered[activeDojoQuestionTable]) || [];
+
+            document.getElementById('dojo-progress').textContent = selectedDojoTable === 'mix'
+                ? 'Mixed Mode Active!'
+                : `Table of ${selectedDojoTable} Mastered: ${mastered.length} / 10`;
+
+            const unmastered = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter(m => !mastered.includes(m));
+            const pool = unmastered.length > 0 ? unmastered : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            currentDojoMult = pool[randInt(0, pool.length - 1)];
+
+            const isMissingFactor = Math.random() < 0.3;
+            const product = currentDojoMult * activeDojoQuestionTable;
+            const correctAnswer = isMissingFactor ? currentDojoMult : product;
+
+            if (isMissingFactor) {
+                document.getElementById('dojo-question').innerHTML = Math.random() < 0.5
+                    ? `${activeDojoQuestionTable} × <span class="text-amber-400">?</span> = ${product}`
+                    : `<span class="text-amber-400">?</span> × ${activeDojoQuestionTable} = ${product}`;
+                document.getElementById('dojo-hint').textContent = `How many ${activeDojoQuestionTable}s make ${product}?`;
+            } else {
+                document.getElementById('dojo-question').textContent = Math.random() < 0.5
+                    ? `${activeDojoQuestionTable} × ${currentDojoMult} = ?`
+                    : `${currentDojoMult} × ${activeDojoQuestionTable} = ?`;
+                document.getElementById('dojo-hint').textContent = `Think: ${currentDojoMult} groups of ${activeDojoQuestionTable}`;
+            }
+
+            document.getElementById('dojo-feedback').textContent = '';
+            document.getElementById('dojo-rows-slider').value = currentDojoMult;
+            updateDojoSlider(currentDojoMult, activeDojoQuestionTable);
+
+            const distractors = new Set([correctAnswer]);
+            while (distractors.size < 4) {
+                const offset = isMissingFactor
+                    ? [-2, -1, 1, 2, 3][randInt(0, 4)]
+                    : [-activeDojoQuestionTable, activeDojoQuestionTable, -2, 2, 5, 10][randInt(0, 5)];
+                const candidate = correctAnswer + offset;
+                if (candidate > 0 && candidate <= 100 && candidate !== correctAnswer) distractors.add(candidate);
+            }
+
+            const choices = Array.from(distractors).sort(() => Math.random() - 0.5);
+            document.getElementById('dojo-choices').innerHTML = choices.map(val => `
+                <button onclick="checkDojoAnswer(${val}, ${correctAnswer})" class="btn-game bg-indigo-600 hover:bg-indigo-500 text-white font-black text-2xl py-3.5 rounded-2xl">
+                    ${val}
+                </button>
+            `).join('');
+        }
+
+        function revealDojoVisual() {
+            playMusicCue('hint');
+            updateDojoSlider(currentDojoMult, activeDojoQuestionTable);
+            const fb = document.getElementById('dojo-feedback');
+            fb.className = 'text-left text-xs sm:text-sm font-extrabold min-h-[24px] text-sky-300';
+            fb.textContent = `${currentDojoMult} rows of ${activeDojoQuestionTable} = ${currentDojoMult * activeDojoQuestionTable}!`;
+        }
+
+        function checkDojoAnswer(chosen, correct) {
+            const fb = document.getElementById('dojo-feedback');
+            const student = getCurrentStudent();
+            if (chosen === correct) {
+                playMusicCue('success');
+                if (!student.tablesMastered) student.tablesMastered = {};
+                if (!student.tablesMastered[activeDojoQuestionTable]) student.tablesMastered[activeDojoQuestionTable] = [];
+                if (!student.tablesMastered[activeDojoQuestionTable].includes(currentDojoMult)) {
+                    student.tablesMastered[activeDojoQuestionTable].push(currentDojoMult);
+                }
+                student.stars += 1;
+                student.xp += 10;
+                if (student.xp >= 100) {
+                    student.level += 1;
+                    student.xp -= 100;
+                }
+                saveStore();
+                if (selectedDojoTable !== 'mix') initDojo();
+                fb.className = 'text-left text-xs sm:text-sm font-extrabold min-h-[24px] text-emerald-400';
+                fb.textContent = `🎵 Awesome! ${currentDojoMult} × ${activeDojoQuestionTable} = ${currentDojoMult * activeDojoQuestionTable}! (+1 🪙)`;
+                setTimeout(nextDojoQuestion, 850);
+            } else {
+                playMusicCue('gentle_retry');
+                fb.className = 'text-left text-xs sm:text-sm font-extrabold min-h-[24px] text-amber-300';
+                fb.textContent = `Not quite! Count the ${activeDojoQuestionTable}-dot rows on the left!`;
+            }
+        }
+
+        // ==========================================
+        // 8. MISSION CHECKUP / ASSESSMENTS ENGINE
+        // ==========================================
+        let assessFocus = 'allround';
+        let assessTargetTable = 2;
+        let assessQuestions = [];
+        let assessIndex = 0;
+        let assessResults = [];
+        let assessTimerInterval = null;
+        let assessSecondsElapsed = 0;
+
+        function initAssessmentSetup() {
+            document.getElementById('assess-setup-view').classList.remove('hidden');
+            document.getElementById('assess-active-view').classList.add('hidden');
+            document.getElementById('assess-report-view').classList.add('hidden');
+            clearInterval(assessTimerInterval);
+
+            const student = getCurrentStudent();
+            const labels = { easy: 'Cadet (1–20)', medium: 'Explorer (1–100)', hard: 'Commander (1–1000)' };
+            document.getElementById('assess-student-label').textContent = student.name;
+            document.getElementById('assess-diff-label').textContent = labels[currentDifficulty];
+
+            const pillsBox = document.getElementById('assess-table-pills');
+            const options = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'mix'];
+            pillsBox.innerHTML = options.map(opt => {
+                const isSel = opt === assessTargetTable;
+                const label = opt === 'mix' ? 'Mixed Tables' : `${opt}× Table`;
+                return `<button onclick="selectAssessTable(${typeof opt === 'string' ? `'${opt}'` : opt})" class="px-3 py-1.5 rounded-xl font-extrabold text-xs sm:text-sm border-2 transition ${isSel ? 'bg-amber-400 border-amber-500 text-slate-950' : 'bg-white border-amber-200 text-slate-700 hover:bg-amber-100'}">${label}</button>`;
+            }).join('');
+
+            renderAssessmentHistory();
+        }
+
+        function selectAssessFocus(focus) {
+            playMusicCue('click');
+            assessFocus = focus;
+            ['allround', 'addsub', 'missing', 'tables'].forEach(f => {
+                const btn = document.getElementById(`focus-${f}`);
+                btn.className = f === focus
+                    ? 'assess-focus-btn text-left p-4 rounded-2xl border-2 border-indigo-600 bg-indigo-50 transition flex items-start gap-3 shadow-sm'
+                    : 'assess-focus-btn text-left p-4 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 transition flex items-start gap-3';
+            });
+            document.getElementById('assess-table-picker').classList.toggle('hidden', focus !== 'tables');
+        }
+
+        function selectAssessTable(t) {
+            playMusicCue('click');
+            assessTargetTable = t;
+            initAssessmentSetup();
+        }
+
+        function startAssessment() {
+            playMusicCue('click');
+            assessQuestions = [];
+            assessResults = [];
+            assessIndex = 0;
+            assessSecondsElapsed = 0;
+
+            for (let i = 0; i < 10; i++) {
+                let q = null;
+                if (assessFocus === 'allround') {
+                    const mixCats = ['make10', 'partition', 'subtraction', 'missing', 'story', 'multiplication', 'column', 'make10', 'missing', 'subtraction'];
+                    q = generateProblem('quest', currentDifficulty, mixCats[i]);
+                    if (i === 7) q.isMethodChoice = true;
+                } else if (assessFocus === 'addsub') {
+                    const cats = ['make10', 'partition', 'column', 'subtraction'];
+                    q = generateProblem('quest', currentDifficulty, cats[i % cats.length]);
+                } else if (assessFocus === 'missing') {
+                    q = generateProblem('missing', currentDifficulty, 'missing');
+                } else if (assessFocus === 'tables') {
+                    const tbl = assessTargetTable === 'mix' ? randInt(2, 10) : assessTargetTable;
+                    q = generateProblem('quest', currentDifficulty, 'multiplication', tbl);
+                }
+                assessQuestions.push(q);
+            }
+
+            document.getElementById('assess-setup-view').classList.add('hidden');
+            document.getElementById('assess-report-view').classList.add('hidden');
+            document.getElementById('assess-active-view').classList.remove('hidden');
+
+            const useTimer = document.getElementById('assess-timer-toggle').checked;
+            const timerEl = document.getElementById('assess-timer-display');
+            clearInterval(assessTimerInterval);
+            if (useTimer) {
+                timerEl.classList.remove('hidden');
+                timerEl.textContent = '⏱️ 00:00';
+                assessTimerInterval = setInterval(() => {
+                    assessSecondsElapsed++;
+                    const mins = String(Math.floor(assessSecondsElapsed / 60)).padStart(2, '0');
+                    const secs = String(assessSecondsElapsed % 60).padStart(2, '0');
+                    timerEl.textContent = `⏱️ ${mins}:${secs}`;
+                }, 1000);
+            } else {
+                timerEl.classList.add('hidden');
+            }
+
+            renderAssessmentQuestion();
+        }
+
+        function renderAssessmentQuestion() {
+            const q = assessQuestions[assessIndex];
+            document.getElementById('assess-q-counter').textContent = `Question ${assessIndex + 1} of 10`;
+
+            document.getElementById('assess-dots').innerHTML = Array.from({ length: 10 }, (_, idx) => {
+                let color = 'bg-slate-200';
+                if (idx < assessIndex) color = 'bg-indigo-500';
+                else if (idx === assessIndex) color = 'bg-amber-400 ring-2 ring-amber-500';
+                return `<div class="h-2.5 rounded-full ${color} transition-all"></div>`;
+            }).join('');
+
+            const storyEl = document.getElementById('assess-story-box');
+            if (q.story) {
+                storyEl.innerHTML = q.story;
+                storyEl.classList.remove('hidden');
+            } else {
+                storyEl.classList.add('hidden');
+            }
+
+            document.getElementById('assess-equation').innerHTML = q.equationHTML;
+
+            const numArea = document.getElementById('assess-numeric-area');
+            const matchArea = document.getElementById('assess-matcher-options');
+
+            if (q.isMethodChoice) {
+                numArea.classList.add('hidden');
+                matchArea.classList.remove('hidden');
+                document.getElementById('assess-subhint').textContent = 'Which strategy works BEST for this problem?';
+                const allStrategies = [
+                    { key: 'make10', label: 'Make-10 (Tiokompisar)' },
+                    { key: 'numberline_gap', label: 'Number Line Jump-Up' },
+                    { key: 'numberline_sub', label: 'Number Line Jump-Back' },
+                    { key: 'partition', label: 'Split Tens & Ones' },
+                    { key: 'column', label: 'Column Method (Uppställning)' },
+                    { key: 'array', label: 'Equal Groups / Array' }
+                ];
+                const correctObj = allStrategies.find(s => s.key === q.strategyKey);
+                const others = allStrategies.filter(s => s.key !== q.strategyKey).sort(() => Math.random() - 0.5).slice(0, 3);
+                const choices = [correctObj, ...others].sort(() => Math.random() - 0.5);
+                matchArea.innerHTML = choices.map(c => `
+                    <button onclick="submitAssessmentMethod('${c.key}', '${c.label}')" class="btn-game p-3.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 font-extrabold text-indigo-950 text-sm">
+                        ${c.label}
+                    </button>
+                `).join('');
+            } else {
+                matchArea.classList.add('hidden');
+                numArea.classList.remove('hidden');
+                document.getElementById('assess-subhint').textContent = 'Enter your answer below and tap Next →';
+                document.getElementById('assess-input').value = '';
+            }
+        }
+
+        function pressAssessNum(d) {
+            playMusicCue('click');
+            const inp = document.getElementById('assess-input');
+            if (inp.value.length < 4) inp.value += d;
+        }
+        function backspaceAssessNum() {
+            playMusicCue('click');
+            const inp = document.getElementById('assess-input');
+            inp.value = inp.value.slice(0, -1);
+        }
+        function clearAssessNum() {
+            playMusicCue('click');
+            document.getElementById('assess-input').value = '';
+        }
+
+        function submitAssessmentMethod(chosenKey, chosenLabel) {
+            playMusicCue('click');
+            const q = assessQuestions[assessIndex];
+            assessResults.push({
+                question: q,
+                userAnswer: chosenLabel,
+                correctAnswer: q.strategyName,
+                isCorrect: chosenKey === q.strategyKey
+            });
+            advanceAssessment();
+        }
+
+        function submitAssessmentAnswer() {
+            const inp = document.getElementById('assess-input');
+            const val = parseInt(inp.value, 10);
+            if (isNaN(val)) {
+                playMusicCue('gentle_retry');
+                inp.classList.add('animate-shake');
+                setTimeout(() => inp.classList.remove('animate-shake'), 350);
+                return;
+            }
+            playMusicCue('click');
+            const q = assessQuestions[assessIndex];
+            assessResults.push({
+                question: q,
+                userAnswer: val,
+                correctAnswer: q.answer,
+                isCorrect: val === q.answer
+            });
+            advanceAssessment();
+        }
+
+        function advanceAssessment() {
+            assessIndex++;
+            if (assessIndex < 10) renderAssessmentQuestion();
+            else finishAssessment();
+        }
+
+        function abortAssessment() {
+            clearInterval(assessTimerInterval);
+            initAssessmentSetup();
+        }
+
+        function finishAssessment() {
+            clearInterval(assessTimerInterval);
+            playMusicCue('fanfare');
+
+            const student = getCurrentStudent();
+            const score = assessResults.filter(r => r.isCorrect).length;
+            const starsEarned = Math.max(2, score);
+            student.stars += starsEarned;
+            student.xp += score * 10;
+            while (student.xp >= 100) {
+                student.level += 1;
+                student.xp -= 100;
+            }
+
+            let medalIcon = '🥉', medalTitle = 'Bronze Explorer Medal';
+            if (score >= 9) { medalIcon = '🥇'; medalTitle = 'Gold Rocket Medal!'; }
+            else if (score >= 7) { medalIcon = '🥈'; medalTitle = 'Silver Star Medal!'; }
+
+            const strongStrategies = new Set();
+            const weakStrategies = new Set();
+            assessResults.forEach(r => {
+                if (r.isCorrect) strongStrategies.add(r.question.strategyName);
+                else weakStrategies.add(r.question.strategyName);
+            });
+
+            const focusNames = {
+                allround: 'All-Round Explorer',
+                addsub: 'Addition & Subtraction',
+                missing: 'Missing Numbers (? + x)',
+                tables: assessTargetTable === 'mix' ? 'Mixed Times Tables' : `Table of ${assessTargetTable} (${assessTargetTable}×)`
+            };
+
+            const reportRecord = {
+                date: new Date().toLocaleDateString(),
+                focus: focusNames[assessFocus],
+                score,
+                medal: medalIcon,
+                weakArea: weakStrategies.size > 0 ? Array.from(weakStrategies)[0] : 'None — All Mastered!'
+            };
+            if (!Array.isArray(student.assessmentHistory)) student.assessmentHistory = [];
+            student.assessmentHistory.unshift(reportRecord);
+            if (student.assessmentHistory.length > 9) student.assessmentHistory.pop();
+
+            checkBadges(student);
+            saveStore();
+
+            document.getElementById('assess-active-view').classList.add('hidden');
+            document.getElementById('assess-report-view').classList.remove('hidden');
+
+            document.getElementById('report-medal-icon').textContent = medalIcon;
+            document.getElementById('report-medal-title').textContent = medalTitle;
+            document.getElementById('report-score-headline').textContent = `${student.name}'s Score: ${score} / 10`;
+            document.getElementById('report-meta').textContent = `Focus: ${focusNames[assessFocus]} • Earned +${starsEarned} Star Coins 🪙`;
+
+            let insightHTML = '';
+            if (score === 10) {
+                insightHTML = `🌟 <strong>Incredible!</strong> ${student.name} answered all 10 questions correctly! Ready to try a higher difficulty or another times table.`;
+            } else {
+                const strongText = strongStrategies.size > 0 ? `✅ <strong>Strong Areas:</strong> ${Array.from(strongStrategies).join(', ')}.<br>` : '';
+                const weakText = weakStrategies.size > 0 ? `🎯 <strong>Focus Next:</strong> Review <em>${Array.from(weakStrategies).join(', ')}</em> using the visual strategy buttons below!` : '';
+                insightHTML = strongText + weakText;
+            }
+            document.getElementById('report-insight-text').innerHTML = insightHTML;
+
+            document.getElementById('report-questions-list').innerHTML = assessResults.map((r, idx) => {
+                const statusBadge = r.isCorrect
+                    ? '<span class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-2.5 py-1 rounded-lg">✓ Correct</span>'
+                    : `<span class="bg-rose-100 text-rose-800 font-extrabold text-xs px-2.5 py-1 rounded-lg">✗ Answered: ${r.userAnswer}</span>`;
+                return `
+                    <div class="p-4 rounded-2xl border-2 ${r.isCorrect ? 'border-emerald-200 bg-emerald-50/40' : 'border-rose-200 bg-rose-50/40'}">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <span class="font-black text-slate-400 text-sm">#${idx + 1}</span>
+                                <span class="font-black text-lg text-slate-900">${r.question.plainText || r.question.strategyName}</span>
+                                <span class="text-xs font-extrabold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Answer: ${r.correctAnswer}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${statusBadge}
+                                <button onclick="toggleReportStrategy(${idx})" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs px-3 py-1.5 rounded-xl">
+                                    💡 See Visual Strategy
+                                </button>
+                            </div>
+                        </div>
+                        <div id="report-strat-box-${idx}" class="hidden mt-3 pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center gap-4">
+                            <div class="bg-white p-2.5 rounded-xl border border-slate-200 shrink-0 w-full sm:w-64">
+                                ${renderStrategyVisualSVG(r.question)}
+                            </div>
+                            <div class="text-xs sm:text-sm font-bold text-slate-700">
+                                <div class="text-indigo-800 font-extrabold mb-1">${r.question.strategyName}</div>
+                                <p class="mb-1.5">${r.question.whyText}</p>
+                                <div class="text-emerald-800 bg-emerald-100/70 p-2 rounded-lg">${getStrategyStepsText(r.question)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleReportStrategy(idx) {
+            playMusicCue('hint');
+            document.getElementById(`report-strat-box-${idx}`).classList.toggle('hidden');
+        }
+
+        function resetAssessmentToSetup() {
+            playMusicCue('click');
+            initAssessmentSetup();
+        }
+
+        function renderAssessmentHistory() {
+            const student = getCurrentStudent();
+            const box = document.getElementById('assess-history-list');
+            const hist = student.assessmentHistory || [];
+            if (hist.length === 0) {
+                box.innerHTML = `<div class="col-span-full text-xs font-bold text-slate-400 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">No checkups saved for ${student.name} yet — start a 10-question checkup above!</div>`;
+                return;
+            }
+            box.innerHTML = hist.map(h => `
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 flex items-center justify-between gap-2">
+                    <div>
+                        <div class="text-xs font-extrabold text-indigo-700">${h.focus}</div>
+                        <div class="text-sm font-black text-slate-900">Score: ${h.score} / 10 <span class="text-[11px] font-bold text-slate-400">(${h.date})</span></div>
+                        <div class="text-[11px] font-bold text-slate-500 mt-0.5">Focus tip: ${h.weakArea}</div>
+                    </div>
+                    <span class="text-3xl">${h.medal}</span>
+                </div>
+            `).join('');
+        }
+
+        // Start App on Load
+        window.onload = function() {
+            updateHeaderUI();
+            nextQuestion();
+        };
+    </script>
+</body>
+</html>
